@@ -7,7 +7,7 @@ PostgreSQL con replicación lógica, Redis y un portal en React.
 ## Levantar todo en 3 pasos
 
 ```bash
-git clone https://github.com/<organizacion>/biohub.git
+git clone https://github.com/Juanda210809/biohub.git
 cd biohub
 cp .env.example .env            # en PowerShell: Copy-Item .env.example .env
 docker compose up --build
@@ -41,3 +41,4 @@ Si las 5 tarjetas del portal están en verde, todo está conectado.
 
 - [Primeros pasos](docs/GUIA-INICIO.md): instalar, levantar el proyecto y qué hacer si algo falla.
 - [Cómo trabajamos](docs/COMO-TRABAJAR.md): ramas, commits, pull requests, tablas y permisos.
+- [Recorrido de la base](docs/RECORRIDO.md): qué estudiar antes del Sprint 1 y el PR de práctica.
