@@ -1,19 +1,11 @@
-# Quién revisa cada carpeta. GitHub pide su revisión automáticamente en los pull requests.
-# Se puede usar el usuario de GitHub (@usuario) o el correo verificado en su cuenta.
-
 *                         @Juanda210809
 /servicios/gobernanza/    @Juanda210809
 /servicios/reportes/      @Juanda210809
-
-# Peña: falta su usuario de GitHub. Mientras tanto revisa el líder.
-/servicios/registro/      @Juanda210809
-
+/servicios/registro/      juandawidp@gmail.com
 /servicios/consulta/      @lunaa06
 /portal/                  @lunaa06
-
 /servicios/identidad/     nmatheus@unbosque.edu.co
 /pruebas/                 nmatheus@unbosque.edu.co
-
 /docker-compose.yml       @Nicooooal
 /gateway/                 @Nicooooal
 /db/                      @Nicooooal
