@@ -1,0 +1,7 @@
+body { font-family: system-ui, sans-serif; margin: 0; background: #f6f7f5; color: #1c2b25; }
+main { max-width: 1000px; margin: 0 auto; padding: 32px 16px; }
+.grilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.tarjeta { background: #fff; border: 2px solid #ccc; border-radius: 12px; padding: 16px; }
+.tarjeta.verde { border-color: #2e7d4f; }
+.tarjeta.roja { border-color: #b3261e; }
+.tarjeta h3 { margin-top: 0; }

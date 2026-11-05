@@ -1,0 +1,51 @@
+# Integración continua: corre en cada pull request y en cada cambio a main.
+# Si algo falla aquí, el pull request no se puede unir a main.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  servicios:
+    name: Servicio ${{ matrix.servicio }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        servicio: [registro, gobernanza, identidad, consulta, reportes]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependencias
+        run: pip install -r servicios/${{ matrix.servicio }}/requirements.txt ruff
+      - name: Estilo (ruff)
+        run: ruff check servicios/${{ matrix.servicio }}
+      - name: Pruebas (pytest)
+        working-directory: servicios/${{ matrix.servicio }}
+        run: python -m pytest -q
+
+  portal:
+    name: Portal Web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: portal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  contenedores:
+    name: Construir contenedores
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env && docker compose build

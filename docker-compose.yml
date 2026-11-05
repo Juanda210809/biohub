@@ -1,0 +1,161 @@
+# BioHub: todo el sistema en contenedores.
+# Uso:  cp .env.example .env   y luego   docker compose up --build
+# Solo Kong (8000) y el portal (5173) se usan desde el navegador.
+# Las bases se exponen en 5442/5443/5444 solo para revisarlas con un cliente SQL.
+
+x-servicio-python: &servicio-python
+  restart: unless-stopped
+  env_file: .env
+  environment: &entorno-comun
+    IDENTIDAD_URL: http://identidad:8000
+    WATCHFILES_FORCE_POLLING: "true"   # recarga automática en Windows
+
+services:
+  # ---------------------------------------------------------------- bases
+  bd-operacional:
+    image: postgis/postgis:16-3.4
+    command: ["postgres", "-c", "wal_level=logical"]
+    env_file: .env
+    volumes:
+      - ./db/operacional:/docker-entrypoint-initdb.d:ro
+      - datos-operacional:/var/lib/postgresql/data
+    ports: ["5442:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  bd-consulta:
+    image: postgres:16
+    env_file: .env
+    volumes:
+      - ./db/consulta:/docker-entrypoint-initdb.d:ro
+      - datos-consulta:/var/lib/postgresql/data
+    ports: ["5443:5432"]
+    depends_on:
+      bd-operacional: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  bd-reportes:
+    image: postgres:16
+    env_file: .env
+    volumes:
+      - ./db/reportes:/docker-entrypoint-initdb.d:ro
+      - datos-reportes:/var/lib/postgresql/data
+    ports: ["5444:5432"]
+    depends_on:
+      bd-operacional: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  # ------------------------------------------------------------ servicios
+  registro:
+    <<: *servicio-python
+    build: ./servicios/registro
+    environment:
+      <<: *entorno-comun
+      SERVICIO: registro
+      ROOT_PATH: /api/v1/registro
+      ESQUEMA: campo
+      DATABASE_URL: postgresql+psycopg://svc_registro:${REGISTRO_DB_PASSWORD}@bd-operacional:5432/${POSTGRES_DB}
+    volumes: ["./servicios/registro:/app"]
+    depends_on:
+      bd-operacional: { condition: service_healthy }
+
+  gobernanza:
+    <<: *servicio-python
+    build: ./servicios/gobernanza
+    environment:
+      <<: *entorno-comun
+      SERVICIO: gobernanza
+      ROOT_PATH: /api/v1/gobernanza
+      ESQUEMA: gobernanza
+      DATABASE_URL: postgresql+psycopg://svc_gobernanza:${GOBERNANZA_DB_PASSWORD}@bd-operacional:5432/${POSTGRES_DB}
+    volumes: ["./servicios/gobernanza:/app"]
+    depends_on:
+      bd-operacional: { condition: service_healthy }
+
+  identidad:
+    <<: *servicio-python
+    build: ./servicios/identidad
+    environment:
+      <<: *entorno-comun
+      SERVICIO: identidad
+      ROOT_PATH: /api/v1/identidad
+      ESQUEMA: identidad
+      DATABASE_URL: postgresql+psycopg://svc_identidad:${IDENTIDAD_DB_PASSWORD}@bd-operacional:5432/${POSTGRES_DB}
+    volumes: ["./servicios/identidad:/app"]
+    depends_on:
+      bd-operacional: { condition: service_healthy }
+
+  consulta:
+    <<: *servicio-python
+    build: ./servicios/consulta
+    environment:
+      <<: *entorno-comun
+      SERVICIO: consulta
+      ROOT_PATH: /api/v1/consulta
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql+psycopg://svc_consulta:${CONSULTA_DB_PASSWORD}@bd-consulta:5432/${POSTGRES_DB}
+    volumes: ["./servicios/consulta:/app"]
+    depends_on:
+      bd-consulta: { condition: service_healthy }
+      redis: { condition: service_started }
+
+  reportes:
+    <<: *servicio-python
+    build: ./servicios/reportes
+    environment:
+      <<: *entorno-comun
+      SERVICIO: reportes
+      ROOT_PATH: /api/v1/reportes
+      ESQUEMA: reportes
+      DATABASE_URL: postgresql+psycopg://svc_reportes:${REPORTES_DB_PASSWORD}@bd-reportes:5432/${POSTGRES_DB}
+    volumes: ["./servicios/reportes:/app"]
+    depends_on:
+      bd-reportes: { condition: service_healthy }
+
+  # ------------------------------------------------------ puerta y portal
+  kong:
+    image: kong:3.6
+    restart: unless-stopped
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_LISTEN: 127.0.0.1:8001
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+    volumes:
+      - ./gateway/kong.yml:/kong/kong.yml:ro
+    ports: ["8000:8000"]
+    depends_on: [registro, gobernanza, identidad, consulta, reportes]
+
+  portal:
+    build: ./portal
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: ${VITE_API_URL}
+      CHOKIDAR_USEPOLLING: "true"   # recarga automática en Windows
+    volumes:
+      - ./portal:/app
+      - /app/node_modules
+    ports: ["5173:5173"]
+    depends_on: [kong]
+
+volumes:
+  datos-operacional:
+  datos-consulta:
+  datos-reportes:

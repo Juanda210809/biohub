@@ -1,0 +1,79 @@
+# Kong en modo sin base de datos: toda su configuración vive en este archivo.
+# Cada servicio tiene su ruta /api/v1/<servicio>. Kong quita ese prefijo
+# antes de pasar la petición (strip_path), así que el servicio recibe /salud, /docs, etc.
+_format_version: "3.0"
+
+services:
+  - name: registro
+    url: http://registro:8000
+    routes:
+      - name: registro
+        paths: ["/api/v1/registro"]
+        strip_path: true
+
+  - name: gobernanza
+    url: http://gobernanza:8000
+    routes:
+      - name: gobernanza
+        paths: ["/api/v1/gobernanza"]
+        strip_path: true
+
+  - name: identidad
+    url: http://identidad:8000
+    routes:
+      - name: identidad
+        paths: ["/api/v1/identidad"]
+        strip_path: true
+      # El PDP (/interno/...) solo lo llaman los servicios dentro de la red.
+      # Si alguien lo intenta desde afuera, Kong responde 403.
+      - name: identidad-interno-bloqueado
+        paths: ["/api/v1/identidad/interno"]
+        plugins:
+          - name: request-termination
+            config:
+              status_code: 403
+              message: "Ruta interna"
+
+  - name: consulta
+    url: http://consulta:8000
+    routes:
+      - name: consulta
+        paths: ["/api/v1/consulta"]
+        strip_path: true
+
+  - name: reportes
+    url: http://reportes:8000
+    routes:
+      - name: reportes
+        paths: ["/api/v1/reportes"]
+        strip_path: true
+
+  # API externa para universidades y ONG (HU-13, HU-14):
+  # exige clave (key-auth) y limita a 60 peticiones por minuto (rate-limiting).
+  - name: consulta-externa
+    url: http://consulta:8000/externa
+    routes:
+      - name: externa-v1
+        paths: ["/externa/v1"]
+        strip_path: true
+    plugins:
+      - name: key-auth
+        config:
+          key_names: ["apikey"]
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+
+consumers:
+  - username: universidad-demo
+    keyauth_credentials:
+      - key: clave-demo-universidad   # solo para pruebas locales
+
+plugins:
+  # Permite que el portal (localhost:5173) llame a Kong desde el navegador.
+  - name: cors
+    config:
+      origins: ["http://localhost:5173"]
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+      headers: ["Authorization", "Content-Type", "apikey"]

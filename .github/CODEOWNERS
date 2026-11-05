@@ -1,0 +1,15 @@
+# Quién revisa cada carpeta. GitHub pide su revisión automáticamente en los pull requests.
+# REEMPLAZA los @usuario-... por los usuarios reales de GitHub de cada integrante.
+
+*                         @Juanda210809
+/servicios/gobernanza/    @Juanda210809
+/servicios/reportes/      @Juanda210809
+/servicios/registro/      @usuario-de-pena
+/servicios/consulta/      @usuario-de-luna
+/portal/                  @usuario-de-luna
+/servicios/identidad/     @usuario-de-matheus
+/pruebas/                 @usuario-de-matheus
+/docker-compose.yml       @usuario-de-arias
+/gateway/                 @usuario-de-arias
+/db/                      @usuario-de-arias
+/.github/                 @usuario-de-arias

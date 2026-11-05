@@ -1,0 +1,6 @@
+# Todos los archivos de texto con finales de línea de Linux (LF).
+# Evita que los scripts .sh fallen dentro de los contenedores al clonar en Windows.
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.png binary
+*.jpg binary

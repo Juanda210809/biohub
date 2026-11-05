@@ -1,0 +1,10 @@
+# Estilo de Python igual para todo el equipo (la extensión Ruff de VS Code lo usa).
+line-length = 110
+target-version = "py312"
+extend-exclude = ["**/migraciones/versions"]
+
+[lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[lint.isort]
+known-first-party = ["app"]
