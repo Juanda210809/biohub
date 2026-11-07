@@ -40,6 +40,15 @@ services:
       - name: consulta
         paths: ["/api/v1/consulta"]
         strip_path: true
+      # La API externa solo se publica por /externa/v1, con clave y cuota.
+      # Bloquear este prefijo evita alcanzarla por la ruta publica de Consulta.
+      - name: consulta-externa-bloqueada
+        paths: ["/api/v1/consulta/externa"]
+        plugins:
+          - name: request-termination
+            config:
+              status_code: 403
+              message: "Use la API externa en /externa/v1"
 
   - name: reportes
     url: http://reportes:8000
