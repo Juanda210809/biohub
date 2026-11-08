@@ -9,3 +9,5 @@ python -m pip install -r gateway/requirements-test.txt
 python -m pytest gateway/tests/test_kong_config.py -q
 python -m pytest gateway/tests/test_kong_integration.py -q
 ```
+
+La falta de Docker hace fallar la integracion; no se omite silenciosamente. Para probar tambien los 11 contenedores, la replicacion y los permisos SQL, ejecutar python -m pytest gateway/tests db/tests -q -W error. Ver db/README.md para el aislamiento de los datos de prueba.

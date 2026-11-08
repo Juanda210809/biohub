@@ -6,6 +6,7 @@ import socket
 import subprocess
 import threading
 import time
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 import pytest
@@ -42,7 +43,7 @@ def free_port():
 @pytest.fixture
 def kong_gateway(tmp_path_factory):
     if shutil.which("docker") is None:
-        pytest.skip("Docker is required for the Kong integration test")
+        pytest.fail("Docker is required: integration tests must not be skipped")
 
     name = f"biohub-kong-test-{os.getpid()}"
     upstream_port = free_port()
@@ -64,18 +65,30 @@ def kong_gateway(tmp_path_factory):
     config_path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
     command = [
-        "docker", "run", "--detach", "--rm", "--name", name,
+        "docker",
+        "run",
+        "--detach",
+        "--rm",
+        "--name",
+        name,
         "--add-host=host.docker.internal:host-gateway",
-        "--publish", f"127.0.0.1:{proxy_port}:8000",
-        "--env", "KONG_DATABASE=off",
-        "--env", "KONG_DECLARATIVE_CONFIG=/kong/kong.yml",
-        "--env", "KONG_PROXY_LISTEN=0.0.0.0:8000",
-        "--volume", f"{config_path}:/kong/kong.yml:ro",
+        "--publish",
+        f"127.0.0.1:{proxy_port}:8000",
+        "--env",
+        "KONG_DATABASE=off",
+        "--env",
+        "KONG_DECLARATIVE_CONFIG=/kong/kong.yml",
+        "--env",
+        "KONG_PROXY_LISTEN=0.0.0.0:8000",
+        "--volume",
+        f"{config_path}:/kong/kong.yml:ro",
         KONG_IMAGE,
     ]
     container_id = None
     try:
-        started = subprocess.run(command, check=True, capture_output=True, text=True)
+        started = subprocess.run(
+            command, check=True, capture_output=True, text=True, encoding="utf-8", errors="replace"
+        )
         container_id = started.stdout.strip()
         import httpx
 
@@ -90,7 +103,13 @@ def kong_gateway(tmp_path_factory):
                 break
             time.sleep(1)
         else:
-            logs = subprocess.run(["docker", "logs", container_id], capture_output=True, text=True)
+            logs = subprocess.run(
+                ["docker", "logs", container_id],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
             pytest.fail(f"Kong did not become ready.\n{logs.stdout}\n{logs.stderr}")
 
         yield f"http://127.0.0.1:{proxy_port}"
@@ -124,10 +143,12 @@ def test_external_rate_limit_rejects_request_61_before_upstream(kong_gateway):
 
     url = f"{kong_gateway}/externa/v1/hallazgos"
     with httpx.Client(timeout=5) as client:
+        # Start well inside the server's minute window, not at its boundary.
+        server_time = parsedate_to_datetime(client.get(f"{kong_gateway}/").headers["date"])
+        if server_time.second > 30:
+            time.sleep(61 - server_time.second)
         responses = [client.get(url, headers={"apikey": API_KEY}) for _ in range(60)]
-        other_consumer = client.get(
-            url, headers={"apikey": "clave-demo-universidad-2"}
-        )
+        other_consumer = client.get(url, headers={"apikey": "clave-demo-universidad-2"})
         over_limit = client.get(url, headers={"apikey": API_KEY})
 
     assert all(response.status_code == 200 for response in responses)

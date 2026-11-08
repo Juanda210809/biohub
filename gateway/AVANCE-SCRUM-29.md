@@ -1,38 +1,40 @@
-# Avance de SCRUM-29 y cobertura del gateway
+﻿# Avance de SCRUM-29 y SCRUM-30
 
 Rama: feature/SCRUM-29-api-externa.
 
-## Completado
+## Completado y verificado
 
-- Configuracion de CI para ejecutar las pruebas del gateway.
-- Pruebas de configuracion y de integracion con Kong 3.6 y un upstream HTTP simulado.
-- Reproduccion del acceso alternativo: /api/v1/consulta/externa/hallazgos respondia 200 sin apikey.
-- Correccion en gateway/kong.yml: bloquear /api/v1/consulta/externa en Kong con 403.
-- La API externa conserva /externa/v1 y sus controles; la ruta publica /api/v1/consulta/salud sigue funcionando.
+- Kong: ruta externa estable, API key, cuota de 60 solicitudes/minuto por consumidor y bloqueo del PDP interno.
+- Bloqueo del acceso alternativo /api/v1/consulta/externa (incluida la variante codificada).
+- Bases de datos publicadas solo en 127.0.0.1 para clientes SQL locales.
+- Pruebas del sistema completo con 11 contenedores, conexiones de los cinco servicios, Redis y portal.
+- Replicacion de un hallazgo publico desde operacional hacia Consulta y Reportes; lectura permitida y escritura rechazada para svc_consulta.
+- CI ejecuta pruebas del gateway y del sistema completo. La ausencia de Docker produce un fallo explicito.
+- Prueba de cuota ajustada para empezar lejos del cambio de minuto.
 
 ## Validacion local
 
-Resultado posterior a la correccion: 7 passed (4 pruebas unitarias de configuracion y 3 de integracion), sin omisiones. Ruff aprobado.
-La prueba de regresion fallo antes de la correccion con 200 en vez de 403.
-La integracion cubre clave ausente/invalida, reescritura de ruta, cuota, independencia de consumidores, bloqueo del PDP y acceso alternativo (incluida %65xterna).
-El upstream simulado comprueba que las solicitudes bloqueadas no llegan al servicio. No valida el inventario real ni la ausencia de coordenadas en sus datos.
+12 pruebas aprobadas: 6 unitarias de configuracion y 6 de integracion. Ruff aprobado.
+Ultima ejecucion: python -m pytest gateway/tests db/tests -q -W error; sin advertencias ni omisiones.
+La regresion del acceso alternativo fue reproducida antes de corregirla (200 en lugar de 403).
+Las pruebas usan proyectos, puertos y volumenes temporales; no usan el archivo .env personal.
 
-## Continuar aqui
+## Pendiente
 
-1. Revisar aislamiento y puertos de bases de datos en docker-compose.yml, con pruebas.
-2. Levantar el sistema completo y comprobar la conexion real Kong-Consulta.
-3. Coordinar con Luna el inventario real de /externa/hallazgos y validar que no exponga coordenadas exactas.
-4. Revisar robustez de la prueba de cuota ante el cambio de minuto y evitar omisiones silenciosas en CI si falta Docker.
-5. Revisar diff, guardar commit, subir la rama y comprobar CI en GitHub antes de fusionar.
+1. Integrar con Luna el inventario real de /externa/hallazgos. Actualmente responde un mensaje de ejemplo.
+2. Probar el contrato y la ausencia de coordenadas exactas sobre ese inventario real.
+3. Revisar el PR y la ejecucion de CI del ultimo commit antes de fusionar.
+4. Para despliegue: definir dominio/TLS y provisionar claves reales. Si hay varias instancias de Kong, usar contadores compartidos.
 
-HU-13 y HU-14 no se consideran cerradas. Este avance se publica en la rama de trabajo. Consultar git status y el PR para el estado de publicacion y revision.
+HU-13 y HU-14 no se consideran cerradas. El acceso local a las bases no equivale a segmentar las redes internas de Docker.
+Consultar git status, el historial de la rama y el PR para comprobar que avance esta publicado.
 
 ## Ejecutar
 
-Desde la raiz del repositorio, con Docker Desktop activo:
+Con Docker activo, desde la raiz:
 
     python -m pip install -r gateway/requirements-test.txt ruff
-    python -m pytest gateway/tests -q -rs
-    ruff check gateway/tests
+    python -m pytest gateway/tests db/tests -q -W error
+    ruff check gateway/tests db/tests
 
-Las pruebas crean y eliminan sus propios contenedores de Kong.
+Detalles de infraestructura en db/README.md y del contrato externo en gateway/README.md.

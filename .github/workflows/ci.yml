@@ -59,8 +59,15 @@ jobs:
       - run: npm run build
 
   contenedores:
-    name: Construir contenedores
+    name: Infraestructura y sistema completo
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cp .env.example .env && docker compose build
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r gateway/requirements-test.txt ruff
+      - run: ruff check db/tests
+      - name: Configuracion, arranque, replicacion y acceso por Kong
+        run: python -m pytest db/tests -q
