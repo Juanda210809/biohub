@@ -2,7 +2,7 @@
 
 - Registro (svc_registro) solo puede AGREGAR la versión 1 cuando se crea un hallazgo (HU-03).
 - Gobernanza agrega las versiones 2, 3... al reclasificar (HU-08).
-- Nadie actualiza ni borra filas: el historial nunca se pierde (HU-08, HU-12).
+- Nadie actualiza ni borra filas, ni siquiera Gobernanza: el historial nunca se pierde (HU-08, HU-12).
 - Sin llave foránea hacia campo.hallazgo: las migraciones de Registro y Gobernanza
   arrancan al mismo tiempo y no se garantiza cuál termina primero.
 
@@ -41,6 +41,9 @@ def upgrade() -> None:
         "CREATE INDEX hallazgo_version_por_fecha "
         "ON gobernanza.hallazgo_version (hallazgo_id, vigente_desde)"
     )
+
+    # El historial es de solo inserción, también para el dueño (svc_gobernanza).
+    op.execute("REVOKE UPDATE, DELETE, TRUNCATE ON gobernanza.hallazgo_version FROM svc_gobernanza")
 
     # Registro puede entrar al esquema y AGREGAR la versión 1. No puede leer, cambiar ni borrar.
     op.execute("GRANT USAGE ON SCHEMA gobernanza TO svc_registro")
