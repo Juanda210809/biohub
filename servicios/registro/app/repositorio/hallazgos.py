@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.dominio.hallazgos import Especie, NuevoHallazgo
+from app.dominio.hallazgos import Especie, FichaVigente, NuevoHallazgo
 from app.dominio.validadores import DefinicionAtributo, TipoAtributo
 
 ACCION_REGISTRAR = "registrar_hallazgo"
@@ -87,7 +87,7 @@ class RepositorioHallazgos:
         filas = self._sesion.execute(
             text(
                 """
-                SELECT d.clave, d.tipo, d.obligatorio, d.reglas, d.publicable
+                SELECT d.clave, d.etiqueta, d.tipo, d.obligatorio, d.reglas, d.publicable
                 FROM campo.definicion_atributo d
                 JOIN campo.revision_ficha r ON r.id = d.revision_ficha_id
                 WHERE r.tipo_especie_id = :tipo AND r.estado = 'PUBLICADA' AND d.activo
@@ -97,9 +97,28 @@ class RepositorioHallazgos:
             {"tipo": tipo_especie_id},
         ).all()
         return [
-            DefinicionAtributo(f.clave, TipoAtributo(f.tipo), f.obligatorio, f.reglas, f.publicable)
+            DefinicionAtributo(
+                f.clave, TipoAtributo(f.tipo), f.obligatorio, f.reglas, f.publicable, f.etiqueta
+            )
             for f in filas
         ]
+
+    def obtener_ficha_vigente(self, tipo_especie_id: UUID) -> FichaVigente | None:
+        fila = self._sesion.execute(
+            text(
+                """
+                SELECT t.nombre, r.numero
+                FROM campo.tipo_especie t
+                JOIN campo.revision_ficha r ON r.tipo_especie_id = t.id AND r.estado = 'PUBLICADA'
+                WHERE t.id = :id
+                """
+            ),
+            {"id": tipo_especie_id},
+        ).first()
+        if fila is None:
+            return None
+        atributos = self.definiciones_vigentes(tipo_especie_id)
+        return FichaVigente(tipo_especie_id, fila.nombre, fila.numero, atributos)
 
     def registrar(
         self, datos: NuevoHallazgo, nombre_especie: str, publicos: dict

@@ -14,6 +14,14 @@ class Especie:
     tipo_especie_id: UUID
     nombre_cientifico: str
 
+@dataclass(frozen=True)
+class FichaVigente:
+    """La ficha publicada de un tipo de especie: su revisión y sus atributos."""
+
+    tipo_especie_id: UUID
+    nombre: str
+    revision: int
+    atributos: list[DefinicionAtributo]
 
 @dataclass(frozen=True)
 class NuevoHallazgo:
