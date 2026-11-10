@@ -28,6 +28,7 @@ class DefinicionAtributo:
     tipo: TipoAtributo
     obligatorio: bool = False
     reglas: dict[str, Any] = field(default_factory=dict)
+    publicable: bool = False
 
 
 class ValidadorAtributo(ABC):
