@@ -1,7 +1,7 @@
 # Servicio Registro y Gestión de Campo
 
 **Dueño:** Peña
-**Historias del MVP:** HU-03 Registrar hallazgo · HU-04 Definir atributos de la ficha · HU-07 Ver coordenadas exactas
+**Historias del MVP:** HU-03 Registrar hallazgo · HU-04 Definir atributos de la ficha · HU-21 Registro disponible durante picos de consulta
 
 | Qué | Dónde |
 |---|---|
