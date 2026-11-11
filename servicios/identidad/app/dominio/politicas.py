@@ -67,3 +67,4 @@ class ServicioAutorizacion:
         except TokenInvalido:
             return Decision(False, "Sesión inválida, vencida, cerrada o de una cuenta desactivada")
         return decidir(accion, usuario)
+
