@@ -7,12 +7,14 @@ Documentación automática de las rutas: http://localhost:8000/api/v1/identidad/
 """
 from fastapi import FastAPI
 
-from app.api import ejemplo, pdp
+from app.api import pdp, sesiones
+from app.api.errores import registrar_manejadores
 from app.config import ROOT_PATH, SERVICIO
 from app.db import estado_bd
 
 app = FastAPI(title="BioHub · Identidad y Autorización", root_path=ROOT_PATH)
-app.include_router(ejemplo.router)
+registrar_manejadores(app)
+app.include_router(sesiones.router)
 app.include_router(pdp.router)
 
 
