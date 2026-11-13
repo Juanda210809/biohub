@@ -150,3 +150,81 @@ def test_real_services_via_kong(stack):
         assert client.get("/api/v1/consulta/externa/hallazgos").status_code == 403
     portal = stack("port", "portal", "5173").stdout.strip()
     assert httpx.get(f"http://{portal}", timeout=10).status_code == 200
+
+
+def test_registro_persists_and_replicates_only_public_data(stack):
+    # Exercise the real use case and SQL transaction; the current PDP denies all HTTP writes.
+    script = """
+import json
+from datetime import date
+from decimal import Decimal
+from uuid import UUID
+from app.db import obtener_sesion
+from app.dominio.hallazgos import NuevoHallazgo
+from app.dominio.servicio_hallazgos import ServicioHallazgos
+from app.repositorio.hallazgos import RepositorioHallazgos
+session_generator = obtener_sesion()
+session = next(session_generator)
+try:
+    identifier = ServicioHallazgos(RepositorioHallazgos(session)).registrar(NuevoHallazgo(
+        especie_id=UUID("20000000-0000-0000-0000-000000000001"),
+        expedicion_id=UUID("30000000-0000-0000-0000-000000000001"),
+        investigador_id=UUID("00000000-0000-0000-0000-0000000000aa"),
+        fecha_hallazgo=date(2026, 11, 1), latitud=Decimal("2.512345"),
+        longitud=Decimal("-77.123456"), region="Pacifico", departamento="Cauca",
+        atributos={"temperaturaAgua": 18.5, "observaciones": "PRIVATE_TEST_LOCATION"},
+    ))
+    print(json.dumps({"id": str(identifier)}))
+finally:
+    session_generator.close()
+"""
+    result = stack("exec", "-T", "registro", "python", "-c", script)
+    identifier = str(uuid.UUID(json.loads(result.stdout.strip())["id"]))
+    for table, column in (
+        ("campo.hallazgo", "id"),
+        ("campo.ubicacion", "hallazgo_id"),
+        ("gobernanza.hallazgo_version", "hallazgo_id"),
+        ("campo.auditoria", "recurso_id"),
+    ):
+        assert (
+            sql(
+                stack, "bd-operacional", f"SELECT count(*) FROM {table} WHERE {column}='{identifier}'"
+            ).stdout.strip()
+            == "1"
+        )
+    for database in DATABASES:
+        statement = f"SELECT row_to_json(p) FROM campo.hallazgo_publico p WHERE hallazgo_id='{identifier}'"
+        for _ in range(30):
+            raw = sql(stack, database, statement).stdout.strip()
+            if raw:
+                break
+            time.sleep(1)
+        assert raw, f"Missing public row in {database}"
+        row = json.loads(raw)
+        assert row["atributos_publicos"] == {"temperaturaAgua": 18.5}
+        assert row["region"] == "Pacifico" and row["departamento"] == "Cauca"
+        assert row["version"] == 1
+        assert not {"latitud", "longitud", "precision_m"} & row.keys()
+        assert "PRIVATE_TEST_LOCATION" not in raw
+        assert "2.512345" not in raw and "-77.123456" not in raw
+
+
+def test_registro_http_denial_does_not_create_rows(stack):
+    before = sql(stack, "bd-operacional", "SELECT count(*) FROM campo.hallazgo").stdout.strip()
+    payload = {
+        "especieId": "20000000-0000-0000-0000-000000000001",
+        "expedicionId": "30000000-0000-0000-0000-000000000001",
+        "fechaHallazgo": "2026-11-01",
+        "latitud": 2.512345,
+        "longitud": -77.123456,
+        "region": "Pacifico",
+        "atributos": {"temperaturaAgua": 18.5},
+    }
+    address = stack("port", "kong", "8000").stdout.strip()
+    with httpx.Client(base_url=f"http://{address}", timeout=10) as client:
+        assert client.post("/api/v1/registro/hallazgos", json=payload).status_code == 401
+        response = client.post(
+            "/api/v1/registro/hallazgos", json=payload, headers={"Authorization": "Bearer invalid-test-token"}
+        )
+        assert response.status_code == 403
+    assert sql(stack, "bd-operacional", "SELECT count(*) FROM campo.hallazgo").stdout.strip() == before

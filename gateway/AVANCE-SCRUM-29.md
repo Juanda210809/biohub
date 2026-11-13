@@ -14,7 +14,7 @@ Rama: feature/SCRUM-29-api-externa.
 
 ## Validacion local
 
-12 pruebas aprobadas: 6 unitarias de configuracion y 6 de integracion. Ruff aprobado.
+14 pruebas aprobadas: 6 unitarias de configuracion y 8 de integracion. Ruff aprobado.
 Ultima ejecucion: python -m pytest gateway/tests db/tests -q -W error; sin advertencias ni omisiones.
 La regresion del acceso alternativo fue reproducida antes de corregirla (200 en lugar de 403).
 Las pruebas usan proyectos, puertos y volumenes temporales; no usan el archivo .env personal.
@@ -38,3 +38,12 @@ Con Docker activo, desde la raiz:
     ruff check gateway/tests db/tests
 
 Detalles de infraestructura en db/README.md y del contrato externo en gateway/README.md.
+
+## Integracion del 13 de noviembre
+
+Main incorporado sin conflictos (Registro y migraciones de Gobernanza). Las dos pruebas nuevas verifican el guardado real de Registro, version inicial, auditoria y replicacion sin los datos privados del caso de prueba; tambien verifican rechazo HTTP sin insertar filas.
+
+Resultado adicional: 39 pruebas de Registro aprobadas en su imagen Docker, con 31 advertencias de dependencias (Starlette/AnyIO y Pydantic). No se modifico el codigo de Registro.
+
+Pendiente: probar el registro HTTP autorizado cuando se integre el PDP de Matheus. El PDP actual deniega todo; la prueba positiva invoca el caso de uso dentro del contenedor con la base real. Sigue pendiente el inventario externo de Luna.
+

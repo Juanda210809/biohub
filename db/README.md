@@ -25,3 +25,14 @@ Las pruebas de db/tests construyen y levantan los 11 contenedores actuales en un
 Se verifica la configuracion y la publicacion real de los puertos SQL, conexiones de los servicios, replicacion de una fila nueva a ambas copias, rechazo de escritura con svc_consulta, Redis, portal y entrada por Kong. La respuesta externa actual sigue siendo un marcador: el 200 demuestra conectividad, no que el inventario real este implementado o libre de coordenadas.
 
 Si Docker no esta disponible, las pruebas de integracion fallan explicitamente. El CI ejecuta las pruebas del gateway y las de infraestructura en trabajos separados.
+
+## Integracion con main del 13 de noviembre
+
+Se incorporaron las migraciones de Gobernanza y el registro de hallazgos de main.
+Se agregaron dos pruebas: el caso de uso real de Registro guarda hallazgo, ubicacion,
+version inicial y auditoria, y replica solo datos publicos; por HTTP, una solicitud
+sin credencial o con token invalido es rechazada sin insertar hallazgos.
+
+La prueba de guardado ejecuta el caso de uso dentro del contenedor, con SQL real.
+No sustituye una prueba HTTP autorizada: el PDP de main todavia deniega todo.
+El listado externo de Consulta sigue siendo provisional.
