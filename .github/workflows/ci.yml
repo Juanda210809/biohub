@@ -8,6 +8,21 @@ on:
     branches: [main]
 
 jobs:
+  gateway:
+    name: API Gateway
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependencias de pruebas
+        run: pip install -r gateway/requirements-test.txt ruff
+      - name: Estilo (ruff)
+        run: ruff check gateway/tests
+      - name: Pruebas unitarias y de integracion de Kong
+        run: python -m pytest gateway/tests -q
+
   servicios:
     name: Servicio ${{ matrix.servicio }}
     runs-on: ubuntu-latest
@@ -44,8 +59,15 @@ jobs:
       - run: npm run build
 
   contenedores:
-    name: Construir contenedores
+    name: Infraestructura y sistema completo
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cp .env.example .env && docker compose build
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r gateway/requirements-test.txt ruff
+      - run: ruff check db/tests
+      - name: Configuracion, arranque, replicacion y acceso por Kong
+        run: python -m pytest db/tests -q
