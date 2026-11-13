@@ -75,7 +75,7 @@ def sql(stack, database, statement, role=None, check=True):
         database,
         "sh",
         "-c",
-        f'psql -v ON_ERROR_STOP=1 -U "{user}" -d "$POSTGRES_DB" -Atc "$1"',
+        f'psql -v ON_ERROR_STOP=1 -v VERBOSITY=verbose -U "{user}" -d "$POSTGRES_DB" -Atc "$1"',
         "sh",
         statement,
         check=check,
@@ -152,9 +152,7 @@ def test_real_services_via_kong(stack):
     assert httpx.get(f"http://{portal}", timeout=10).status_code == 200
 
 
-def test_registro_persists_and_replicates_only_public_data(stack):
-    # Exercise the real use case and SQL transaction; the current PDP denies all HTTP writes.
-    script = """
+REGISTRO_SCRIPT = """
 import json
 from datetime import date
 from decimal import Decimal
@@ -178,7 +176,10 @@ try:
 finally:
     session_generator.close()
 """
-    result = stack("exec", "-T", "registro", "python", "-c", script)
+
+
+def test_registro_persists_and_replicates_only_public_data(stack):
+    result = stack("exec", "-T", "registro", "python", "-c", REGISTRO_SCRIPT)
     identifier = str(uuid.UUID(json.loads(result.stdout.strip())["id"]))
     for table, column in (
         ("campo.hallazgo", "id"),
@@ -228,3 +229,106 @@ def test_registro_http_denial_does_not_create_rows(stack):
         )
         assert response.status_code == 403
     assert sql(stack, "bd-operacional", "SELECT count(*) FROM campo.hallazgo").stdout.strip() == before
+
+
+def test_late_failure_rolls_back_entire_registro_transaction(stack):
+    tables = (
+        "campo.hallazgo",
+        "campo.ubicacion",
+        "gobernanza.hallazgo_version",
+        "campo.hallazgo_publico",
+        "campo.auditoria",
+    )
+    before = {
+        table: sql(stack, "bd-operacional", f"SELECT count(*) FROM {table}").stdout.strip()
+        for table in tables
+    }
+    # Only the isolated test DB is modified. Fail the final INSERT, after the public row.
+    sql(
+        stack,
+        "bd-operacional",
+        """
+        CREATE FUNCTION campo.test_fail_audit() RETURNS trigger LANGUAGE plpgsql AS $$
+        BEGIN RAISE EXCEPTION 'TEST_FINAL_INSERT_FAILURE' USING ERRCODE = '23514'; END; $$;
+        CREATE TRIGGER test_fail_audit BEFORE INSERT ON campo.auditoria
+        FOR EACH ROW EXECUTE FUNCTION campo.test_fail_audit();
+    """,
+    )
+    try:
+        failed = stack("exec", "-T", "registro", "python", "-c", REGISTRO_SCRIPT, check=False)
+        assert failed.returncode != 0
+        assert "TEST_FINAL_INSERT_FAILURE" in failed.stderr
+        for table in tables:
+            assert (
+                sql(stack, "bd-operacional", f"SELECT count(*) FROM {table}").stdout.strip() == before[table]
+            )
+    finally:
+        sql(
+            stack,
+            "bd-operacional",
+            "DROP TRIGGER test_fail_audit ON campo.auditoria; DROP FUNCTION campo.test_fail_audit()",
+        )
+    # A subsequent successful commit acts as a replication barrier, avoiding a sleep-only assertion.
+    result = stack("exec", "-T", "registro", "python", "-c", REGISTRO_SCRIPT)
+    identifier = str(uuid.UUID(json.loads(result.stdout.strip())["id"]))
+    expected = sql(
+        stack, "bd-operacional", "SELECT hallazgo_id FROM campo.hallazgo_publico ORDER BY hallazgo_id"
+    ).stdout.strip()
+    for database in ("bd-consulta", "bd-reportes"):
+        for _ in range(30):
+            count = sql(
+                stack,
+                database,
+                f"SELECT count(*) FROM campo.hallazgo_publico WHERE hallazgo_id='{identifier}'",
+            ).stdout.strip()
+            if count == "1":
+                break
+            time.sleep(1)
+        assert count == "1", f"Replication barrier missing in {database}"
+        assert (
+            sql(
+                stack, database, "SELECT hallazgo_id FROM campo.hallazgo_publico ORDER BY hallazgo_id"
+            ).stdout.strip()
+            == expected
+        )
+
+
+@pytest.mark.parametrize(
+    "database,role,statement",
+    [
+        (database, role, statement)
+        for database, role in (("bd-consulta", "svc_consulta"), ("bd-reportes", "svc_reportes"))
+        for statement in (
+            "INSERT INTO campo.hallazgo_publico (hallazgo_id, especie) VALUES (gen_random_uuid(), 'test')",
+            "UPDATE campo.hallazgo_publico SET especie='test'",
+            "DELETE FROM campo.hallazgo_publico",
+            "TRUNCATE campo.hallazgo_publico",
+        )
+    ]
+    + [
+        ("bd-operacional", role, statement)
+        for role, statement in (
+            ("svc_registro", "SELECT * FROM gobernanza.hallazgo_version"),
+            ("svc_registro", "UPDATE campo.auditoria SET accion='test'"),
+            ("svc_gobernanza", "SELECT * FROM campo.ubicacion"),
+            ("svc_gobernanza", "UPDATE campo.hallazgo_publico SET region='test'"),
+            ("svc_gobernanza", "DELETE FROM gobernanza.hallazgo_version"),
+            ("svc_gobernanza", "UPDATE gobernanza.hallazgo_version SET especie='test'"),
+            ("svc_gobernanza", "TRUNCATE gobernanza.hallazgo_version"),
+            ("svc_identidad", "SELECT * FROM campo.hallazgo"),
+            ("replicador", "SELECT * FROM campo.ubicacion"),
+        )
+    ],
+)
+def test_service_roles_reject_forbidden_sql(stack, database, role, statement):
+    # Explicit read-write tests table grants even when the role defaults to read-only.
+    # Roll back even if a permission unexpectedly allows the operation.
+    result = sql(
+        stack,
+        database,
+        "BEGIN READ WRITE; " + statement + "; ROLLBACK;",
+        role=role,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "42501" in result.stderr, result.stderr

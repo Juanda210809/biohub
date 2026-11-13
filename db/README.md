@@ -36,3 +36,21 @@ sin credencial o con token invalido es rechazada sin insertar hallazgos.
 La prueba de guardado ejecuta el caso de uso dentro del contenedor, con SQL real.
 No sustituye una prueba HTTP autorizada: el PDP de main todavia deniega todo.
 El listado externo de Consulta sigue siendo provisional.
+
+## Fallos de transaccion y permisos SQL
+
+La integracion inyecta un error en la ultima escritura (auditoria) dentro de la base
+exclusiva de pruebas. Comprueba que las cinco tablas conserven sus cantidades y que
+las replicas coincidan con operacional despues de un commit posterior replicado.
+El trigger temporal se elimina en finally. No se modifica la base de desarrollo.
+
+Se prueban 17 operaciones prohibidas para Consulta, Reportes, Registro, Gobernanza,
+Identidad y el replicador. Se exige SQLSTATE 42501 (permiso insuficiente), no cualquier
+error. La transaccion se abre READ WRITE para verificar los permisos de tabla aun
+cuando el usuario tenga solo lectura por defecto; no se alteran sus permisos.
+Todas las operaciones se revierten incluso si una autorizacion inesperada las permite.
+
+Las pruebas unitarias de servicios/registro/tests/test_transaccion_repositorio.py
+cubren fallos en cada una de las cinco escrituras, en commit y la confirmacion exitosa.
+Estas pruebas no demuestran aislamiento frente a un usuario propietario malicioso
+que cambie sus propios permisos o el esquema; verifican las operaciones SQL indicadas.

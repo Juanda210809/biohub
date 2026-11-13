@@ -1,4 +1,4 @@
-﻿# Avance de SCRUM-29 y SCRUM-30
+# Avance de SCRUM-29 y SCRUM-30
 
 Rama: feature/SCRUM-29-api-externa.
 
@@ -14,7 +14,7 @@ Rama: feature/SCRUM-29-api-externa.
 
 ## Validacion local
 
-14 pruebas aprobadas: 6 unitarias de configuracion y 8 de integracion. Ruff aprobado.
+32 pruebas aprobadas: 6 unitarias de configuracion y 26 de integracion. Ruff aprobado.
 Ultima ejecucion: python -m pytest gateway/tests db/tests -q -W error; sin advertencias ni omisiones.
 La regresion del acceso alternativo fue reproducida antes de corregirla (200 en lugar de 403).
 Las pruebas usan proyectos, puertos y volumenes temporales; no usan el archivo .env personal.
@@ -47,3 +47,14 @@ Resultado adicional: 39 pruebas de Registro aprobadas en su imagen Docker, con 3
 
 Pendiente: probar el registro HTTP autorizado cuando se integre el PDP de Matheus. El PDP actual deniega todo; la prueba positiva invoca el caso de uso dentro del contenedor con la base real. Sigue pendiente el inventario externo de Luna.
 
+## Rollback y permisos SQL
+
+Se agregaron 7 pruebas unitarias del repositorio (fallos en las cinco escrituras,
+fallo de commit y confirmacion exitosa), una integracion de rollback tardio con
+barrera de replicacion y 17 casos de permisos SQL denegados.
+
+Validacion: 32 pruebas de gateway/infraestructura aprobadas con -W error; 46 de
+Registro aprobadas (persisten las 31 advertencias de dependencias ya registradas).
+Ruff aprobado. No fue necesario cambiar codigo de produccion ni permisos.
+Las pruebas SQL fuerzan READ WRITE para comprobar tambien las autorizaciones de
+tabla, sin depender exclusivamente del modo de solo lectura de Consulta.
