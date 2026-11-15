@@ -210,6 +210,62 @@ def test_registro_persists_and_replicates_only_public_data(stack):
         assert "2.512345" not in raw and "-77.123456" not in raw
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="Pendiente: /externa/hallazgos con inventario real (SCRUM-22, servicios/consulta)",
+)
+def test_external_inventory_never_exposes_exact_coordinates(stack):
+    result = stack("exec", "-T", "registro", "python", "-c", REGISTRO_SCRIPT)
+    identifier = str(uuid.UUID(json.loads(result.stdout.strip())["id"]))
+    statement = f"SELECT row_to_json(p) FROM campo.hallazgo_publico p WHERE hallazgo_id='{identifier}'"
+    for _ in range(30):
+        raw = sql(stack, "bd-consulta", statement).stdout.strip()
+        if raw:
+            break
+        time.sleep(1)
+    assert raw, "Missing public row in bd-consulta"
+    expected = json.loads(raw)
+
+    address = stack("port", "kong", "8000").stdout.strip()
+    with httpx.Client(base_url=f"http://{address}", timeout=10) as client:
+        response = client.get(
+            "/externa/v1/hallazgos", headers={"apikey": "clave-demo-universidad"}
+        )
+    assert response.status_code == 200, response.text
+    assert response.headers["content-type"].split(";", 1)[0].strip() == "application/json"
+    body = response.json()
+    forbidden = {
+        "latitud", "longitud", "lat", "lon", "lng", "coordenadas", "ubicacion",
+        "geom", "precision", "precision_m",
+    }
+    records = []
+
+    def inspect(value):
+        if isinstance(value, dict):
+            assert not forbidden.intersection(key.casefold() for key in value), value
+            records.append(value)
+            for child in value.values():
+                inspect(child)
+        elif isinstance(value, list):
+            for child in value:
+                inspect(child)
+        elif isinstance(value, (int, float)):
+            assert value not in (2.512345, -77.123456), value
+        elif isinstance(value, str):
+            assert "2.512345" not in value and "-77.123456" not in value, value
+
+    inspect(body)
+    assert "2.512345" not in response.text and "-77.123456" not in response.text
+    matches = [
+        record for record in records
+        if identifier in (record.get("id"), record.get("hallazgo_id"), record.get("hallazgoId"))
+    ]
+    assert matches, f"Registered finding {identifier} missing from external inventory: {body}"
+    for record in matches:
+        assert record["especie"] == expected["especie"]
+        assert record["region"] == expected["region"]
+
+
 def test_registro_http_denial_does_not_create_rows(stack):
     before = sql(stack, "bd-operacional", "SELECT count(*) FROM campo.hallazgo").stdout.strip()
     payload = {
