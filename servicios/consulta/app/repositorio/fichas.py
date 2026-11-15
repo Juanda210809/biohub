@@ -1,12 +1,14 @@
 
-"""Consultas de fichas públicas en la base de datos """
+"""Consultas de fichas públicas en la base de datos."""
+
+from uuid import UUID
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from uuid import UUID
 
 
 def obtener_ficha_publica(sesion: Session, hallazgo_id: UUID):
+    """Busca un hallazgo y devuelve sus datos públicos."""
 
     consulta = text("""
         SELECT

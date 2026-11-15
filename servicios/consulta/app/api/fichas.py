@@ -1,6 +1,7 @@
 
 """Endpoints para consultar fichas públicas."""
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -15,7 +16,7 @@ router = APIRouter(prefix="/hallazgos", tags=["fichas públicas"])
 @router.get("/{hallazgo_id}")
 def consultar_ficha(
     hallazgo_id: UUID,
-    sesion: Session = Depends(obtener_sesion)
+    sesion: Annotated[Session, Depends(obtener_sesion)]
 ):
     """Consulta la ficha pública de un hallazgo."""
 
