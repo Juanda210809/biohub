@@ -1,4 +1,4 @@
-﻿# Infraestructura local y pruebas
+# Infraestructura local y pruebas
 
 ## Acceso de desarrollo
 
@@ -54,3 +54,16 @@ Las pruebas unitarias de servicios/registro/tests/test_transaccion_repositorio.p
 cubren fallos en cada una de las cinco escrituras, en commit y la confirmacion exitosa.
 Estas pruebas no demuestran aislamiento frente a un usuario propietario malicioso
 que cambie sus propios permisos o el esquema; verifican las operaciones SQL indicadas.
+
+## Caida y recuperacion de Consulta
+
+La prueba detiene exclusivamente el contenedor Consulta del proyecto temporal y
+verifica que una peticion externa autorizada reciba 502, 503 o 504 en menos de 15 segundos. Sin clave o con clave
+invalida sigue recibiendo 401; el acceso alternativo y el PDP interno siguen en 403.
+Registro permanece accesible. Consulta se arranca de nuevo en finally y se espera
+su recuperacion con PostgreSQL y Redis antes de exigir nuevamente 200 en la API.
+No es una prueba del contenido del inventario ni de la cuota durante la caida.
+
+Ejecutar solo este escenario (requiere Docker; construye el sistema completo):
+
+    python -m pytest db/tests/test_stack_integration.py -k outage -q -W error

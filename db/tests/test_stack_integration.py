@@ -332,3 +332,48 @@ def test_service_roles_reject_forbidden_sql(stack, database, role, statement):
     )
     assert result.returncode != 0
     assert "42501" in result.stderr, result.stderr
+
+
+def test_consulta_outage_preserves_gateway_controls_and_recovers(stack):
+    address = stack("port", "kong", "8000").stdout.strip()
+    external = "/externa/v1/hallazgos"
+    credentials = {"apikey": "clave-demo-universidad"}
+    with httpx.Client(base_url=f"http://{address}", timeout=20) as client:
+        assert client.get(external, headers=credentials).status_code == 200
+        try:
+            stack("stop", "-t", "5", "consulta")
+            container = stack("ps", "-a", "-q", "consulta").stdout.strip()
+            running = subprocess.check_output(
+                ["docker", "inspect", "--format", "{{.State.Running}}", container],
+                text=True,
+                encoding="utf-8",
+            ).strip()
+            assert running == "false"
+            started = time.monotonic()
+            unavailable = client.get(external, headers=credentials)
+            assert time.monotonic() - started < 15
+            assert unavailable.status_code in (502, 503, 504), unavailable.text
+            assert client.get(external).status_code == 401
+            assert client.get(external, headers={"apikey": "invalid-test-key"}).status_code == 401
+            for path in (
+                "/api/v1/consulta/externa/hallazgos",
+                "/api/v1/consulta/%65xterna/hallazgos",
+                "/api/v1/identidad/interno/autorizar",
+            ):
+                assert client.get(path).status_code == 403
+            # An unrelated service stays reachable while Consulta is down.
+            assert client.get("/api/v1/registro/salud").status_code == 200
+        finally:
+            stack("start", "consulta")
+        # Bounded polling handles application startup without assuming a fixed delay.
+        for _ in range(30):
+            health = client.get("/api/v1/consulta/salud")
+            if health.status_code == 200 and health.json().get("bd") == "ok":
+                break
+            time.sleep(1)
+        assert health.status_code == 200, health.text
+        assert health.json()["bd"] == "ok"
+        assert health.json()["cache"] == "ok"
+        assert client.get(external, headers=credentials).status_code == 200
+        assert client.get(external).status_code == 401
+        assert client.get("/api/v1/consulta/externa/hallazgos").status_code == 403

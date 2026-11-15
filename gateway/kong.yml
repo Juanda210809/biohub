@@ -36,6 +36,10 @@ services:
 
   - name: consulta
     url: http://consulta:8000
+    connect_timeout: 2000
+    read_timeout: 5000
+    write_timeout: 5000
+    retries: 0
     routes:
       - name: consulta
         paths: ["/api/v1/consulta"]
@@ -61,6 +65,10 @@ services:
   # exige clave (key-auth) y limita a 60 peticiones por minuto (rate-limiting).
   - name: consulta-externa
     url: http://consulta:8000/externa
+    connect_timeout: 2000
+    read_timeout: 5000
+    write_timeout: 5000
+    retries: 0
     routes:
       - name: externa-v1
         paths: ["/externa/v1"]

@@ -1,4 +1,4 @@
-﻿# API externa de BioHub
+# API externa de BioHub
 
 La URL de entrada para consumidores es /externa/v1/hallazgos. Kong elimina /externa/v1 y envia la solicitud al servicio consulta, ruta /externa/hallazgos. Los consumidores conservan la URL publica si cambia la ubicacion interna de Consulta.
 
@@ -18,3 +18,11 @@ La politica local de cuota corresponde al despliegue actual de una instancia de 
 El contrato de datos corresponde a Consulta: la respuesta debe provenir del inventario publico y nunca incluir coordenadas exactas. El endpoint actual es un marcador pendiente de completar con su responsable.
 
 Ver db/README.md para ejecutar las pruebas unitarias y de integracion y gateway/AVANCE-SCRUM-29.md para el estado de la entrega.
+
+## Consulta no disponible
+
+Kong usa 2 segundos para conectar y 5 segundos para lectura/escritura hacia Consulta,
+sin reintentos automaticos. Aplica a las rutas publica y externa. Durante una caida
+puede responder 502, 503 o 504; la autenticacion y los bloqueos de rutas siguen activos.
+Las consultas que no respondan dentro de esos limites fallaran; revisar estos valores
+con mediciones cuando se implemente el inventario real.

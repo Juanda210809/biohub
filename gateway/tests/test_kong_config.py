@@ -51,3 +51,12 @@ def test_public_consulta_route_blocks_external_namespace():
     assert blocked["paths"] == ["/api/v1/consulta/externa"]
     assert termination["config"]["status_code"] == 403
     assert "methods" not in blocked  # El bloqueo aplica a todos los metodos HTTP.
+
+
+def test_consulta_failure_wait_is_bounded_without_retries():
+    services = {service["name"]: service for service in load_config()["services"]}
+    for name in ("consulta", "consulta-externa"):
+        assert services[name]["connect_timeout"] == 2000
+        assert services[name]["read_timeout"] == 5000
+        assert services[name]["write_timeout"] == 5000
+        assert services[name]["retries"] == 0

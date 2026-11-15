@@ -14,7 +14,7 @@ Rama: feature/SCRUM-29-api-externa.
 
 ## Validacion local
 
-32 pruebas aprobadas: 6 unitarias de configuracion y 26 de integracion. Ruff aprobado.
+34 pruebas aprobadas: 7 unitarias de configuracion y 27 de integracion. Ruff aprobado.
 Ultima ejecucion: python -m pytest gateway/tests db/tests -q -W error; sin advertencias ni omisiones.
 La regresion del acceso alternativo fue reproducida antes de corregirla (200 en lugar de 403).
 Las pruebas usan proyectos, puertos y volumenes temporales; no usan el archivo .env personal.
@@ -58,3 +58,14 @@ Registro aprobadas (persisten las 31 advertencias de dependencias ya registradas
 Ruff aprobado. No fue necesario cambiar codigo de produccion ni permisos.
 Las pruebas SQL fuerzan READ WRITE para comprobar tambien las autorizaciones de
 tabla, sin depender exclusivamente del modo de solo lectura de Consulta.
+
+## Caida y recuperacion de Consulta
+
+Se reprodujo una espera superior a 20 segundos sin respuesta al detener Consulta.
+Kong ahora limita la conexion a 2 segundos y lectura/escritura a 5 segundos, sin
+reintentos, para consulta y consulta-externa. Una prueba unitaria fija esos limites.
+La integracion detiene solo Consulta del proyecto temporal: exige error 502/503/504
+en menos de 15 segundos, conserva 401/403 y verifica que Registro siga accesible.
+Reinicia Consulta en finally y comprueba recuperacion de API, PostgreSQL y Redis.
+Validacion: 34 pruebas aprobadas con -W error y Ruff aprobado.
+Los tiempos deben revisarse con mediciones cuando exista el inventario real.
