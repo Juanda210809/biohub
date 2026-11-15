@@ -87,3 +87,15 @@ revision de aceptacion del equipo, actualizar Jira y fusionar el PR. No se ha pr
 carga concurrente masiva ni se afirma aislamiento absoluto ante ataques de red.
 HU-13: pendiente inventario real, contrato de respuesta sin coordenadas por HTTP y
 validacion en el entorno de entrega. La prueba de replicas no sustituye esa prueba.
+
+## Separacion de entregas por historia
+
+HU-14: feature/SCRUM-30-credencial-cuota, basada en main, con 9 pruebas del gateway.
+HU-13: feature/SCRUM-29-api-externa, basada para revision en la rama HU-14.
+La rama HU-13 conserva el historial original y agrega infraestructura, transacciones,
+replicacion y recuperacion de Consulta. El inventario sigue pendiente de Luna.
+
+Orden de integracion: revisar y fusionar HU-14 a main; despues cambiar la base del PR
+HU-13 a main, verificar su diff y CI, y completar su aceptacion. Mientras HU-14 este
+pendiente, revisar HU-13 contra feature/SCRUM-30-credencial-cuota evita duplicar sus cambios.
+No se borraron ramas ni se reescribieron commits publicados.
