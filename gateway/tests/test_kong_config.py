@@ -60,3 +60,13 @@ def test_consulta_failure_wait_is_bounded_without_retries():
         assert services[name]["read_timeout"] == 5000
         assert services[name]["write_timeout"] == 5000
         assert services[name]["retries"] == 0
+
+
+def test_consumer_credentials_are_header_only_and_hidden_from_upstream():
+    service = next(item for item in load_config()["services"] if item["name"] == "consulta-externa")
+    plugins = {plugin["name"]: plugin["config"] for plugin in service["plugins"]}
+    assert plugins["key-auth"]["key_in_header"] is True
+    assert plugins["key-auth"]["key_in_query"] is False
+    assert plugins["key-auth"]["key_in_body"] is False
+    assert plugins["key-auth"]["hide_credentials"] is True
+    assert plugins["rate-limiting"]["limit_by"] == "consumer"

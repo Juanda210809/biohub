@@ -20,9 +20,11 @@ API_KEY = "clave-demo-universidad"
 
 class EchoHandler(http.server.BaseHTTPRequestHandler):
     requests = 0
+    received_headers = []
 
     def do_GET(self):
         type(self).requests += 1
+        type(self).received_headers.append(dict(self.headers))
         body = json.dumps({"path": self.path}).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
@@ -49,6 +51,7 @@ def kong_gateway(tmp_path_factory):
     upstream_port = free_port()
     proxy_port = free_port()
     EchoHandler.requests = 0
+    EchoHandler.received_headers = []
     server = http.server.ThreadingHTTPServer(("0.0.0.0", upstream_port), EchoHandler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -58,6 +61,7 @@ def kong_gateway(tmp_path_factory):
     external["url"] = f"http://host.docker.internal:{upstream_port}/externa"
     public = next(item for item in config["services"] if item["name"] == "consulta")
     public["url"] = f"http://host.docker.internal:{upstream_port}"
+    config["consumers"][0]["keyauth_credentials"].append({"key": "test-second-key-same-consumer"})
     config["consumers"].append(
         {"username": "universidad-demo-2", "keyauth_credentials": [{"key": "clave-demo-universidad-2"}]}
     )
@@ -147,13 +151,25 @@ def test_external_rate_limit_rejects_request_61_before_upstream(kong_gateway):
         server_time = parsedate_to_datetime(client.get(f"{kong_gateway}/").headers["date"])
         if server_time.second > 30:
             time.sleep(61 - server_time.second)
-        responses = [client.get(url, headers={"apikey": API_KEY}) for _ in range(60)]
+        responses = [
+            client.get(url, headers={"apikey": API_KEY if index % 2 else "test-second-key-same-consumer"})
+            for index in range(60)
+        ]
         other_consumer = client.get(url, headers={"apikey": "clave-demo-universidad-2"})
-        over_limit = client.get(url, headers={"apikey": API_KEY})
+        over_limit = client.get(
+            url,
+            headers={
+                "apikey": API_KEY,
+                "X-Consumer-ID": "forged-consumer",
+                "X-Forwarded-For": "203.0.113.10",
+            },
+        )
 
     assert all(response.status_code == 200 for response in responses)
     assert other_consumer.status_code == 200
     assert over_limit.status_code == 429
+    assert 0 < int(over_limit.headers["retry-after"]) <= 60
+    assert other_consumer.headers["x-ratelimit-remaining-minute"] == "59"
     assert EchoHandler.requests == 61
 
 
@@ -173,3 +189,19 @@ def test_public_route_cannot_bypass_external_controls(kong_gateway):
         public = client.get(f"{kong_gateway}/api/v1/consulta/salud")
         assert public.status_code == 200
         assert public.json() == {"path": "/salud"}
+
+
+def test_api_key_is_header_only_and_not_forwarded(kong_gateway):
+    import httpx
+
+    url = f"{kong_gateway}/externa/v1/hallazgos"
+    with httpx.Client(timeout=5) as client:
+        assert client.get(url, params={"apikey": API_KEY}).status_code == 401
+        assert client.post(url, json={"apikey": API_KEY}).status_code == 401
+        assert EchoHandler.requests == 0
+        response = client.get(url, headers={"APIKey": API_KEY})
+    assert response.status_code == 200
+    assert EchoHandler.requests == 1
+    headers = {key.lower(): value for key, value in EchoHandler.received_headers[0].items()}
+    assert "apikey" not in headers
+    assert headers["x-consumer-username"] == "universidad-demo"

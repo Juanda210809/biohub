@@ -14,7 +14,7 @@ Rama: feature/SCRUM-29-api-externa.
 
 ## Validacion local
 
-34 pruebas aprobadas: 7 unitarias de configuracion y 27 de integracion. Ruff aprobado.
+36 pruebas aprobadas: 8 unitarias de configuracion y 28 de integracion. Ruff aprobado.
 Ultima ejecucion: python -m pytest gateway/tests db/tests -q -W error; sin advertencias ni omisiones.
 La regresion del acceso alternativo fue reproducida antes de corregirla (200 en lugar de 403).
 Las pruebas usan proyectos, puertos y volumenes temporales; no usan el archivo .env personal.
@@ -69,3 +69,21 @@ en menos de 15 segundos, conserva 401/403 y verifica que Registro siga accesible
 Reinicia Consulta en finally y comprueba recuperacion de API, PostgreSQL y Redis.
 Validacion: 34 pruebas aprobadas con -W error y Ruff aprobado.
 Los tiempos deben revisarse con mediciones cuando exista el inventario real.
+
+## Avance HU-14: credenciales y cuota
+
+Kong acepta apikey solo por encabezado y la elimina antes de reenviar a Consulta.
+El limite se configura explicitamente por consumidor. La integracion alterna dos
+claves del mismo consumidor hasta agotar sus 60 peticiones; valida 429 y Retry-After,
+rechazo aunque el cliente cambie encabezados de identidad/IP, y cuota independiente
+para un segundo consumidor. URL y cuerpo no sirven para autenticar.
+Resultado: 36 pruebas aprobadas con -W error y Ruff aprobado.
+Se conserva el acuerdo de esperar a Luna para implementar el inventario externo.
+
+## Cierre de las historias
+
+HU-14: controles implementados y probados para una instancia de Kong. Pendiente
+revision de aceptacion del equipo, actualizar Jira y fusionar el PR. No se ha probado
+carga concurrente masiva ni se afirma aislamiento absoluto ante ataques de red.
+HU-13: pendiente inventario real, contrato de respuesta sin coordenadas por HTTP y
+validacion en el entorno de entrega. La prueba de replicas no sustituye esa prueba.

@@ -26,3 +26,21 @@ sin reintentos automaticos. Aplica a las rutas publica y externa. Durante una ca
 puede responder 502, 503 o 504; la autenticacion y los bloqueos de rutas siguen activos.
 Las consultas que no respondan dentro de esos limites fallaran; revisar estos valores
 con mediciones cuando se implemente el inventario real.
+
+## Credencial y cuota por consumidor (HU-14)
+
+Enviar apikey exclusivamente como encabezado HTTP. Kong no acepta la clave en la
+URL ni en el cuerpo; una peticion que solo la incluya alli recibe 401. Esto evita
+promover URLs con credenciales en historiales y registros. No colocar claves en URLs.
+Kong elimina el encabezado apikey antes de enviar la solicitud a Consulta.
+
+La cuota se identifica explicitamente por consumidor: dos claves del mismo consumidor
+comparten las 60 solicitudes/minuto. Cambiar X-Consumer-ID o X-Forwarded-For enviados
+por el cliente no permite obtener otra cuota. La prueba de integracion valida ambas
+claves y comprueba que un segundo consumidor conserve su propia cuota.
+
+Una respuesta 429 incluye Retry-After (segundos de espera). El cliente debe respetarlo
+y evitar reintentos inmediatos. La cuota usa ventanas de minuto; no es una ventana
+movil ni una prueba de resistencia a ataques de carga. Los encabezados de cuota
+informan las solicitudes restantes. La configuracion local actual usa una sola
+instancia de Kong; varias instancias necesitan un contador compartido.
