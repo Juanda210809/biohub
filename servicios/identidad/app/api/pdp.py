@@ -3,23 +3,29 @@
 Es el ÚNICO lugar del sistema donde se decide quién puede hacer qué (RNF-05).
 Los demás servicios lo llaman con POST /interno/autorizar.
 Kong bloquea esta ruta desde afuera: solo se usa dentro de la red de Docker.
-
-Por ahora NIEGA TODO (falla segura). Matheus implementa las reglas reales:
-validar el JWT, que el usuario esté activo y su rol (HU-01, HU-02).
+Las reglas están en app/dominio/politicas.py. Si algo falla, NIEGA (falla segura).
 """
-from fastapi import APIRouter
-from pydantic import BaseModel
+import logging
+from typing import Annotated
+
+from fastapi import APIRouter, Depends
+
+from app.api.dependencias import obtener_autorizacion
+from app.api.esquemas import DecisionSalida, SolicitudAutorizacion
+from app.dominio.politicas import Decision, ServicioAutorizacion
 
 router = APIRouter(prefix="/interno", tags=["interno (PDP)"])
+registro = logging.getLogger(__name__)
 
 
-class SolicitudAutorizacion(BaseModel):
-    token: str | None = None
-    accion: str
-    recurso: str | None = None
-
-
-@router.post("/autorizar")
-def autorizar(solicitud: SolicitudAutorizacion):
-    # TODO (Matheus): decidir según el rol del usuario del token.
-    return {"decision": "DENEGAR", "motivo": "PDP sin reglas todavía"}
+@router.post("/autorizar", response_model=DecisionSalida)
+def autorizar(
+    solicitud: SolicitudAutorizacion,
+    autorizacion: Annotated[ServicioAutorizacion, Depends(obtener_autorizacion)],
+) -> DecisionSalida:
+    try:
+        decision = autorizacion.autorizar(solicitud.token, solicitud.accion, solicitud.recurso)
+    except Exception:
+        registro.exception("Falla del PDP; se niega por seguridad")
+        decision = Decision(False, "Error interno del PDP: se niega por seguridad")
+    return DecisionSalida.desde(decision)
