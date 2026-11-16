@@ -5,8 +5,8 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from app.cache import guardar_cache, obtener_cache
 from app.repositorio.fichas import obtener_ficha_publica
-from app.cache import obtener_cache, guardar_cache
 
 
 def consultar_ficha_publica(sesion: Session, hallazgo_id: UUID):
