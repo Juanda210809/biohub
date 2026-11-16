@@ -15,7 +15,6 @@ def obtener_ficha_publica(sesion: Session, hallazgo_id: UUID):
             hallazgo_id,
             especie,
             region,
-            departamento,
             ecosistema,
             fecha_hallazgo,
             atributos_publicos,
