@@ -7,6 +7,9 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic.alias_generators import to_camel
 
+from app.dominio.hallazgos import FichaVigente
+from app.dominio.validadores import TipoAtributo
+
 
 class EsquemaBase(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
@@ -41,6 +44,7 @@ class AtributoFicha(EsquemaBase):
     etiqueta: str
     tipo: str
     obligatorio: bool
+    publicable: bool
     reglas: dict[str, Any]
 
 
@@ -49,3 +53,39 @@ class FichaSalida(EsquemaBase):
     nombre: str
     revision: int
     atributos: list[AtributoFicha]
+
+
+def ficha_a_salida(ficha: FichaVigente) -> FichaSalida:
+    """Convierte la ficha del dominio en la respuesta de la API (la usan el GET y el PUT)."""
+    return FichaSalida(
+        tipo_especie_id=ficha.tipo_especie_id,
+        nombre=ficha.nombre,
+        revision=ficha.revision,
+        atributos=[
+            AtributoFicha(
+                clave=a.clave,
+                etiqueta=a.etiqueta,
+                tipo=a.tipo.value,
+                obligatorio=a.obligatorio,
+                publicable=a.publicable,
+                reglas=a.reglas,
+            )
+            for a in ficha.atributos
+        ],
+    )
+
+
+class AtributoEntrada(EsquemaBase):
+    clave: str
+    etiqueta: str
+    tipo: TipoAtributo
+    obligatorio: bool = False
+    publicable: bool = False
+    reglas: dict[str, Any] = Field(default_factory=dict)
+
+
+class FichaEntrada(EsquemaBase):
+    """La ficha completa que quedará vigente, y la revisión que vio quien la edita."""
+
+    revision_base: int = Field(ge=1)
+    atributos: list[AtributoEntrada]

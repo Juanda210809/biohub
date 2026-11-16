@@ -8,7 +8,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.api.errores import ErrorApi
-from app.api.esquemas import AtributoFicha, FichaSalida, HallazgoCreado, HallazgoEntrada
+from app.api.esquemas import FichaSalida, HallazgoCreado, HallazgoEntrada, ficha_a_salida
 from app.autorizacion import DecisionPDP, autorizar
 from app.db import obtener_sesion
 from app.dominio.hallazgos import NuevoHallazgo
@@ -62,21 +62,7 @@ def obtener_ficha(
         raise ErrorApi(
             404, "ficha_no_existe", "El tipo de especie no existe o no tiene una ficha publicada"
         )
-    return FichaSalida(
-        tipo_especie_id=ficha.tipo_especie_id,
-        nombre=ficha.nombre,
-        revision=ficha.revision,
-        atributos=[
-            AtributoFicha(
-                clave=a.clave,
-                etiqueta=a.etiqueta,
-                tipo=a.tipo.value,
-                obligatorio=a.obligatorio,
-                reglas=a.reglas,
-            )
-            for a in ficha.atributos
-        ],
-    )
+    return ficha_a_salida(ficha)
 
 
 @router.post("/hallazgos", response_model=HallazgoCreado, status_code=status.HTTP_201_CREATED)
