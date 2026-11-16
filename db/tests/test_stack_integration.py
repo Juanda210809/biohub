@@ -210,10 +210,6 @@ def test_registro_persists_and_replicates_only_public_data(stack):
         assert "2.512345" not in raw and "-77.123456" not in raw
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Pendiente: /externa/hallazgos con inventario real (SCRUM-22, servicios/consulta)",
-)
 def test_external_inventory_never_exposes_exact_coordinates(stack):
     result = stack("exec", "-T", "registro", "python", "-c", REGISTRO_SCRIPT)
     identifier = str(uuid.UUID(json.loads(result.stdout.strip())["id"]))
