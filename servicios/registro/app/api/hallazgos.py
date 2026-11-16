@@ -9,8 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.api.errores import ErrorApi
 from app.api.esquemas import AtributoFicha, FichaSalida, HallazgoCreado, HallazgoEntrada
-from app.autorizacion import autorizar
-from app.config import INVESTIGADOR_PRUEBA_ID
+from app.autorizacion import DecisionPDP, autorizar
 from app.db import obtener_sesion
 from app.dominio.hallazgos import NuevoHallazgo
 from app.dominio.servicio_hallazgos import (
@@ -23,7 +22,7 @@ from app.repositorio.hallazgos import RepositorioHallazgos
 
 ACCION_PDP = "registrar_hallazgo"
 
-Autorizador = Callable[[str, str, str | None], bool]
+Autorizador = Callable[[str, str, str | None], DecisionPDP]
 
 router = APIRouter(tags=["hallazgos"])
    # auto_error=False: el 401 lo damos nosotros, con el formato de errores del equipo.
@@ -89,13 +88,14 @@ def registrar_hallazgo(
 ) -> HallazgoCreado:
     """Registra un hallazgo con su versión inicial. Requiere el rol INVESTIGADOR (lo decide el PDP)."""
     token = extraer_token(credenciales)
-    if not autorizador(token, ACCION_PDP, None):
+    decision = autorizador(token, ACCION_PDP, None)
+    if not decision.permitido:
         raise ErrorApi(403, "sin_permiso", "No tiene permiso para registrar hallazgos")
 
     datos = NuevoHallazgo(
         especie_id=entrada.especie_id,
         expedicion_id=entrada.expedicion_id,
-        investigador_id=UUID(INVESTIGADOR_PRUEBA_ID),  # TODO (HU-01): tomarlo del token
+        investigador_id=decision.usuario_id,  # el autor de la versión 1 sale del token
         fecha_hallazgo=entrada.fecha_hallazgo,
         latitud=entrada.latitud,
         longitud=entrada.longitud,

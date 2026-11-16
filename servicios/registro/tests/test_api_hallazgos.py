@@ -1,3 +1,5 @@
+from uuid import UUID
+
 CABECERA = {"Authorization": "Bearer token-de-prueba"}
 
 
@@ -29,6 +31,16 @@ def test_registra_el_hallazgo_y_responde_201(cliente, repositorio, autorizador, 
     assert datos.region == "Pacifico"
     assert nombre_especie == "Phyllobates terribilis"
     assert publicos == {"temperaturaAgua": 18.5, "habitat": "quebrada"}
+
+
+def test_el_investigador_sale_del_token(cliente, repositorio, autorizador, cuerpo):
+    autorizador.usuario_id = UUID("00000000-0000-0000-0000-0000000000bb")
+
+    respuesta = cliente.post("/hallazgos", json=cuerpo, headers=CABECERA)
+
+    assert respuesta.status_code == 201
+    datos, _, _ = repositorio.registrado
+    assert datos.investigador_id == UUID("00000000-0000-0000-0000-0000000000bb")
 
 
 def test_basta_con_el_departamento(cliente, cuerpo):

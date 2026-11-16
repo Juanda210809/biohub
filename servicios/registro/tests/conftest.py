@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.api.hallazgos import obtener_autorizador, obtener_repositorio
+from app.autorizacion import DecisionPDP
 from app.dominio.hallazgos import Especie, FichaVigente, NuevoHallazgo
 from app.dominio.validadores import DefinicionAtributo, TipoAtributo
 from app.main import app
@@ -77,11 +78,14 @@ class AutorizadorFalso:
 
     def __init__(self) -> None:
         self.permitir = True
+        self.usuario_id = INVESTIGADOR_ID
         self.llamadas = []
 
     def __call__(self, token, accion, recurso):
         self.llamadas.append((token, accion, recurso))
-        return self.permitir
+        if not self.permitir:
+            return DecisionPDP(False, "Denegado por el falso")
+        return DecisionPDP(True, "Permitido por el falso", self.usuario_id, "INVESTIGADOR")
 
 
 @pytest.fixture
