@@ -1,8 +1,10 @@
 
 """Lógica de negocio para consultar fichas públicas."""
+
 import json
 from uuid import UUID
 
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
 from app.cache import guardar_cache, obtener_cache
@@ -26,14 +28,15 @@ def consultar_ficha_publica(sesion: Session, hallazgo_id: UUID):
     if ficha is None:
         return None
 
-    # 3. Convertir los datos a JSON para almacenarlos.
+    # 3. Normalizar los datos para obtener un JSON consistente.
+    ficha_serializable = jsonable_encoder(ficha)
+
     ficha_json = json.dumps(
-        ficha,
-        default=str,
+        ficha_serializable,
         ensure_ascii=False
     )
 
     # 4. Guardar la ficha durante 300 segundos.
     guardar_cache(clave, ficha_json)
 
-    return ficha
+    return ficha_serializable
