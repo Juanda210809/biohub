@@ -8,13 +8,14 @@ from sqlalchemy.orm import Session
 
 
 def obtener_ficha_publica(sesion: Session, hallazgo_id: UUID):
-    """Busca un hallazgo y devuelve sus datos públicos."""
+    """Busca un hallazgo y devuelve únicamente sus datos públicos."""
 
     consulta = text("""
         SELECT
             hallazgo_id,
             especie,
             region,
+            departamento,
             ecosistema,
             fecha_hallazgo,
             atributos_publicos,
@@ -32,4 +33,20 @@ def obtener_ficha_publica(sesion: Session, hallazgo_id: UUID):
     if resultado is None:
         return None
 
-    return dict(resultado)
+    campos_publicos = {
+        "hallazgo_id",
+        "especie",
+        "region",
+        "departamento",
+        "ecosistema",
+        "fecha_hallazgo",
+        "atributos_publicos",
+        "version",
+        "actualizado_en",
+    }
+
+    return {
+        campo: valor
+        for campo, valor in resultado.items()
+        if campo in campos_publicos
+    }
