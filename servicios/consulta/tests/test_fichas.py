@@ -1,4 +1,4 @@
-﻿
+
 from datetime import datetime
 from unittest.mock import Mock
 from uuid import UUID
@@ -100,7 +100,7 @@ def test_consultar_ficha_usa_cache(cliente, monkeypatch):
 
 def test_consultar_ficha_si_redis_falla(cliente, monkeypatch):
     autorizador = Mock(return_value=True)
-    consulta_bd = Mock(return_value={"especie": "Colibr├¡"})
+    consulta_bd = Mock(return_value={"especie": "Colibrí"})
     guardar = Mock(return_value=False)
 
     monkeypatch.setattr(fichas_api, "autorizar", autorizador)
@@ -123,7 +123,7 @@ def test_consultar_ficha_si_redis_falla(cliente, monkeypatch):
     respuesta = cliente.get(f"/hallazgos/{ID_HALLAZGO}")
 
     assert respuesta.status_code == 200
-    assert respuesta.json()["especie"] == "Colibr├¡"
+    assert respuesta.json()["especie"] == "Colibrí"
     consulta_bd.assert_called_once()
     guardar.assert_called_once()
 
@@ -131,9 +131,9 @@ def test_consultar_ficha_si_redis_falla(cliente, monkeypatch):
 def test_ficha_publica_muestra_departamento(cliente, monkeypatch):
     ficha = {
         "especie": "Guacamaya roja",
-        "region": "Amazon├¡a",
+        "region": "Amazonía",
         "departamento": "Amazonas",
-        "ecosistema": "Bosque h├║medo",
+        "ecosistema": "Bosque húmedo",
     }
 
     monkeypatch.setattr(
@@ -148,7 +148,7 @@ def test_ficha_publica_muestra_departamento(cliente, monkeypatch):
     respuesta = cliente.get(f"/hallazgos/{ID_HALLAZGO}")
 
     assert respuesta.status_code == 200
-    assert respuesta.json()["region"] == "Amazon├¡a"
+    assert respuesta.json()["region"] == "Amazonía"
     assert respuesta.json()["departamento"] == "Amazonas"
 
 
@@ -156,9 +156,9 @@ def test_repositorio_no_expone_coordenadas(monkeypatch):
     fila = {
         "hallazgo_id": UUID(ID_HALLAZGO),
         "especie": "Guacamaya roja",
-        "region": "Amazon├¡a",
+        "region": "Amazonía",
         "departamento": "Amazonas",
-        "ecosistema": "Bosque h├║medo",
+        "ecosistema": "Bosque húmedo",
         "latitud": -1.5,
         "longitud": -71.8,
         "fecha_hallazgo": datetime(2026, 11, 15, 10, 30),
@@ -185,7 +185,7 @@ def test_primera_consulta_igual_a_respuesta_desde_cache(monkeypatch):
 
     ficha_bd = {
         "especie": "Guacamaya roja",
-        "region": "Amazon├¡a",
+        "region": "Amazonía",
         "departamento": "Amazonas",
         "fecha_hallazgo": fecha,
     }

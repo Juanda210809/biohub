@@ -1,4 +1,4 @@
-﻿"""Endpoints para consultar fichas públicas."""
+"""Endpoints para consultar fichas públicas."""
 
 from typing import Annotated
 from uuid import UUID

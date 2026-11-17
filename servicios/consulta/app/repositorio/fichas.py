@@ -1,5 +1,5 @@
-﻿
-"""Consultas de fichas p├║blicas en la base de datos."""
+
+"""Consultas de fichas públicas en la base de datos."""
 
 from uuid import UUID
 
@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 
 def obtener_ficha_publica(sesion: Session, hallazgo_id: UUID):
-    """Busca un hallazgo y devuelve ├║nicamente sus datos p├║blicos."""
+    """Busca un hallazgo y devuelve únicamente sus datos públicos."""
 
     consulta = text("""
         SELECT

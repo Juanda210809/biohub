@@ -1,5 +1,5 @@
-﻿
-"""L├│gica de negocio para consultar fichas p├║blicas."""
+
+"""Lógica de negocio para consultar fichas públicas."""
 
 import json
 from uuid import UUID
@@ -12,7 +12,7 @@ from app.repositorio.fichas import obtener_ficha_publica
 
 
 def consultar_ficha_publica(sesion: Session, hallazgo_id: UUID):
-    """Consulta una ficha p├║blica utilizando Redis y PostgreSQL."""
+    """Consulta una ficha pública utilizando Redis y PostgreSQL."""
 
     clave = f"ficha_publica:{hallazgo_id}"
 
@@ -22,7 +22,7 @@ def consultar_ficha_publica(sesion: Session, hallazgo_id: UUID):
     if ficha_cacheada is not None:
         return json.loads(ficha_cacheada)
 
-    # 2. Si no est├í en Redis, consultar PostgreSQL.
+    # 2. Si no está en Redis, consultar PostgreSQL.
     ficha = obtener_ficha_publica(sesion, hallazgo_id)
 
     if ficha is None:
