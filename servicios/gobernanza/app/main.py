@@ -7,7 +7,7 @@ Documentación automática de las rutas: http://localhost:8000/api/v1/gobernanza
 """
 from fastapi import FastAPI
 
-from app.api import reclasificaciones
+from app.api import historial, reclasificaciones
 from app.api.errores import registrar_manejadores
 from app.config import ROOT_PATH, SERVICIO
 from app.db import estado_bd
@@ -15,6 +15,7 @@ from app.db import estado_bd
 app = FastAPI(title="BioHub · Gobernanza Científica", root_path=ROOT_PATH)
 registrar_manejadores(app)
 app.include_router(reclasificaciones.router)
+app.include_router(historial.router)
 
 
 @app.get("/salud", tags=["salud"])

@@ -1,4 +1,4 @@
-"""Acceso de Gobernanza a la base: leer un hallazgo y guardar su reclasificación (HU-08).
+"""Acceso de Gobernanza a la base: reclasificación (HU-08) y reconstrucción histórica (HU-12).
 
 Permisos de svc_gobernanza (los dan los dueños de cada tabla en sus migraciones):
 - gobernanza.hallazgo_version: es suya; puede agregar y leer, nunca cambiar ni borrar.
@@ -15,20 +15,17 @@ from sqlalchemy import bindparam, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session
 
+from app.dominio.historial import Version
 from app.dominio.reclasificacion import Especie, HallazgoActual, Reclasificacion
 
 ACCION_RECLASIFICAR = "reclasificar"
 
 # FOR UPDATE bloquea el hallazgo hasta el commit: si dos científicos reclasifican a la vez,
 # el segundo espera y calcula su número de versión con lo que dejó el primero.
+# Va SIN join a propósito: con un join, el que espera revisa la fila nueva (con la especie ya
+# cambiada) contra la especie vieja, no coincide y el hallazgo "desaparece" (HallazgoNoExiste).
 SQL_HALLAZGO = text(
-    """
-    SELECT h.id, h.especie_id, h.version_actual, e.nombre_cientifico
-    FROM campo.hallazgo h
-    JOIN campo.especie e ON e.id = h.especie_id
-    WHERE h.id = :id
-    FOR UPDATE OF h
-    """
+    "SELECT id, especie_id, version_actual FROM campo.hallazgo WHERE id = :id FOR UPDATE"
 )
 
 SQL_ESPECIE = text("SELECT id, nombre_cientifico FROM campo.especie WHERE id = :id")
@@ -66,6 +63,25 @@ SQL_ACTUALIZAR_PUBLICO = text(
     """
 )
 
+COLUMNAS_VERSION = "numero, especie, atributos, autor_id, justificacion, vigente_desde"
+
+# Usan el índice hallazgo_version_por_fecha (hallazgo_id, vigente_desde): responden en milisegundos.
+SQL_VIGENTE_EN = text(
+    f"""
+    SELECT {COLUMNAS_VERSION} FROM gobernanza.hallazgo_version
+    WHERE hallazgo_id = :hallazgo_id AND vigente_desde < :instante
+    ORDER BY vigente_desde DESC, numero DESC
+    LIMIT 1
+    """
+)
+
+SQL_EXTREMO = (
+    "SELECT {columnas} FROM gobernanza.hallazgo_version "
+    "WHERE hallazgo_id = :hallazgo_id ORDER BY numero {orden} LIMIT 1"
+)
+SQL_ACTUAL = text(SQL_EXTREMO.format(columnas=COLUMNAS_VERSION, orden="DESC"))
+SQL_PRIMERA = text(SQL_EXTREMO.format(columnas=COLUMNAS_VERSION, orden="ASC"))
+
 SQL_AUDITORIA = text(
     """
     INSERT INTO campo.auditoria (id, actor_id, accion, recurso_id)
@@ -82,11 +98,23 @@ class RepositorioGobernanza:
         fila = self._sesion.execute(SQL_HALLAZGO, {"id": hallazgo_id}).first()
         if fila is None:
             return None
-        return HallazgoActual(fila.id, fila.especie_id, fila.nombre_cientifico, fila.version_actual)
+        especie = self.obtener_especie(fila.especie_id)  # ya con el bloqueo: lee la especie vigente
+        return HallazgoActual(fila.id, fila.especie_id, especie.nombre_cientifico, fila.version_actual)
 
     def obtener_especie(self, especie_id: UUID) -> Especie | None:
         fila = self._sesion.execute(SQL_ESPECIE, {"id": especie_id}).first()
         return Especie(fila.id, fila.nombre_cientifico) if fila else None
+
+    def version_vigente_en(self, hallazgo_id: UUID, instante) -> Version | None:
+        return _a_version(
+            self._sesion.execute(SQL_VIGENTE_EN, {"hallazgo_id": hallazgo_id, "instante": instante}).first()
+        )
+
+    def version_actual(self, hallazgo_id: UUID) -> Version | None:
+        return _a_version(self._sesion.execute(SQL_ACTUAL, {"hallazgo_id": hallazgo_id}).first())
+
+    def primera_version(self, hallazgo_id: UUID) -> Version | None:
+        return _a_version(self._sesion.execute(SQL_PRIMERA, {"hallazgo_id": hallazgo_id}).first())
 
     def descartar(self) -> None:
         self._sesion.rollback()
@@ -143,3 +171,10 @@ class RepositorioGobernanza:
             vigente_desde=vigente_desde,
         )
 
+
+def _a_version(fila) -> Version | None:
+    if fila is None:
+        return None
+    return Version(
+        fila.numero, fila.especie, fila.atributos or {}, fila.autor_id, fila.justificacion, fila.vigente_desde
+    )

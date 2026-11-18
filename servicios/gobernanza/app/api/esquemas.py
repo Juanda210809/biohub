@@ -1,10 +1,12 @@
 """Formas de las peticiones y respuestas de la API de Gobernanza (JSON en camelCase)."""
-from datetime import datetime
+from datetime import date, datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 
+from app.dominio.historial import Reconstruccion, Version
 from app.dominio.reclasificacion import (
     LONGITUD_MAXIMA_JUSTIFICACION,
     JustificacionInvalida,
@@ -49,4 +51,50 @@ class ReclasificacionSalida(EsquemaBase):
             autor_id=r.autor_id,
             justificacion=r.justificacion,
             vigente_desde=r.vigente_desde,
+        )
+
+
+class VersionSalida(EsquemaBase):
+    numero: int
+    especie: str
+    atributos: dict[str, Any]
+    autor_id: UUID
+    justificacion: str
+    vigente_desde: datetime
+
+    @classmethod
+    def desde(cls, v: Version) -> "VersionSalida":
+        return cls(
+            numero=v.numero,
+            especie=v.especie,
+            atributos=v.atributos,
+            autor_id=v.autor_id,
+            justificacion=v.justificacion,
+            vigente_desde=v.vigente_desde,
+        )
+
+
+class CambioSalida(EsquemaBase):
+    campo: str
+    antes: Any
+    ahora: Any
+
+
+class ReconstruccionSalida(EsquemaBase):
+    hallazgo_id: UUID
+    fecha: date
+    en_fecha: VersionSalida
+    actual: VersionSalida
+    versiones_posteriores: int
+    cambios: list[CambioSalida]
+
+    @classmethod
+    def desde(cls, r: Reconstruccion) -> "ReconstruccionSalida":
+        return cls(
+            hallazgo_id=r.hallazgo_id,
+            fecha=r.fecha,
+            en_fecha=VersionSalida.desde(r.en_fecha),
+            actual=VersionSalida.desde(r.actual),
+            versiones_posteriores=r.versiones_posteriores,
+            cambios=[CambioSalida(campo=c.campo, antes=c.antes, ahora=c.ahora) for c in r.cambios],
         )
