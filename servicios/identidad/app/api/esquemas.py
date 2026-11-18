@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
 from app.dominio.politicas import Decision
-from app.dominio.usuarios import Usuario
+from app.dominio.usuarios import Rol, Usuario
 
 
 class EsquemaBase(BaseModel):
@@ -35,6 +35,10 @@ class UsuarioSalida(EsquemaBase):
             activo=usuario.activo,
         )
 
+class AsignacionRolEntrada(EsquemaBase):
+    """null quita el rol: el usuario queda sin acceso a funciones internas."""
+
+    rol: Rol | None
 
 class SesionSalida(EsquemaBase):
     token: str
