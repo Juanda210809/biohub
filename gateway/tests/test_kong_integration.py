@@ -173,6 +173,50 @@ def test_external_rate_limit_rejects_request_61_before_upstream(kong_gateway):
     assert EchoHandler.requests == 61
 
 
+def test_consumer_can_read_its_quota_in_every_response(kong_gateway):
+    import httpx
+
+    url = f"{kong_gateway}/externa/v1/hallazgos"
+
+    def minute_of(response):
+        return parsedate_to_datetime(response.headers["date"]).replace(second=0, microsecond=0)
+
+    with httpx.Client(timeout=5) as client:
+        # La cuota es por minuto: si la tanda cruza el cambio de minuto, el contador
+        # se reinicia y el resultado no prueba nada. En ese caso se repite (max. 3).
+        for _attempt in range(3):
+            server_time = parsedate_to_datetime(client.get(f"{kong_gateway}/").headers["date"])
+            if server_time.second > 30:
+                time.sleep(61 - server_time.second)
+            EchoHandler.requests = 0
+            responses = [client.get(url, headers={"apikey": API_KEY}) for _ in range(60)]
+            over_limit = client.get(url, headers={"apikey": API_KEY})
+            if minute_of(responses[0]) == minute_of(over_limit):
+                break
+            time.sleep(61 - parsedate_to_datetime(over_limit.headers["date"]).second)
+        else:
+            pytest.fail("No se pudieron enviar 61 peticiones dentro del mismo minuto")
+
+    remaining = [int(response.headers["x-ratelimit-remaining-minute"]) for response in responses]
+    assert remaining[0] == 59
+    assert remaining == sorted(remaining, reverse=True)  # nunca sube dentro del minuto
+    for response in responses:
+        assert response.status_code == 200
+        assert response.headers["x-ratelimit-limit-minute"] == "60"
+        assert response.headers["ratelimit-limit"] == "60"
+        assert response.headers["ratelimit-remaining"] == response.headers["x-ratelimit-remaining-minute"]
+        assert 0 < int(response.headers["ratelimit-reset"]) <= 60
+
+    assert over_limit.status_code == 429
+    assert over_limit.headers["x-ratelimit-limit-minute"] == "60"
+    assert over_limit.headers["x-ratelimit-remaining-minute"] == "0"
+    assert over_limit.headers["ratelimit-limit"] == "60"
+    assert over_limit.headers["ratelimit-remaining"] == "0"
+    assert over_limit.headers["retry-after"] == over_limit.headers["ratelimit-reset"]
+    assert 0 < int(over_limit.headers["retry-after"]) <= 60
+    assert EchoHandler.requests == 60
+
+
 def test_public_route_cannot_bypass_external_controls(kong_gateway):
     import httpx
 
