@@ -56,3 +56,17 @@ nunca se borra y conserva sus atributos), cambia la especie en `campo.hallazgo`,
 `campo.hallazgo_publico` y deja el registro en `campo.auditoria`. Quien autoriza sale del token,
 no del cuerpo. El hallazgo se bloquea mientras dura la operación, así dos reclasificaciones al
 mismo tiempo no repiten el número de versión.
+
+## Pruebas
+
+| Tipo | Archivos | Qué prueban | Necesitan |
+|---|---|---|---|
+| Unitarias (19) | `test_api_reclasificaciones.py`, `test_servicio_reclasificacion.py`, `test_autorizacion.py`, `test_salud.py` | Rutas, reglas y cliente del PDP con una base y un PDP falsos | Nada |
+| Integración (8) | `test_integracion_reclasificacion.py` | Contra PostgreSQL real, con los scripts de `db/operacional` y las migraciones reales: transacción completa, historial, permisos de `svc_gobernanza` y dos reclasificaciones a la vez | Docker |
+
+```bash
+cd servicios/gobernanza
+python -m pytest            # todas; las de integración se saltan si Docker no está prendido
+```
+
+En el CI las de integración son obligatorias: si no pueden correr, el PR queda en rojo.
