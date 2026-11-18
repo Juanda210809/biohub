@@ -5,10 +5,10 @@ from uuid import UUID
 import pytest
 from fastapi.testclient import TestClient
 
-from app.api.dependencias import obtener_repositorio, obtener_tokens
+from app.api.dependencias import obtener_cuentas, obtener_repositorio, obtener_tokens
 from app.dominio.autenticacion import ServicioAutenticacion
 from app.dominio.contrasenas import hashear
-from app.dominio.cuentas import ServicioCuentas
+from app.dominio.cuentas import CorreoYaRegistrado, ServicioCuentas
 from app.dominio.tokens import ServicioTokens
 from app.dominio.usuarios import Rol, Usuario
 from app.main import app
@@ -69,6 +69,23 @@ class RepositorioFalso:
     def listar(self):
         return sorted(self.usuarios.values(), key=lambda u: u.correo)
 
+    def crear(self, usuario):
+        if self.buscar_por_correo(usuario.correo) is not None:
+            raise CorreoYaRegistrado
+        self.usuarios[usuario.id] = usuario
+        return usuario
+
+    def actualizar_datos(self, usuario_id, nombre, correo, hash_contrasena):
+        actual = self.usuarios[usuario_id]
+        self.usuarios[usuario_id] = replace(
+            actual, nombre=nombre, correo=correo, hash_contrasena=hash_contrasena
+        )
+        return self.usuarios[usuario_id]
+
+    def cambiar_activo(self, usuario_id, activo):
+        self.usuarios[usuario_id] = replace(self.usuarios[usuario_id], activo=activo)
+        return self.usuarios[usuario_id]
+
     def cambiar_rol(self, usuario_id, rol_anterior, rol_nuevo, actor_id):
         self.cambios_rol.append((usuario_id, rol_anterior, rol_nuevo, actor_id))
         self.usuarios[usuario_id] = replace(self.usuarios[usuario_id], rol=rol_nuevo)
@@ -92,7 +109,7 @@ def autenticacion(repositorio, tokens):
 
 @pytest.fixture
 def cuentas(repositorio):
-    return ServicioCuentas(repositorio)
+    return ServicioCuentas(repositorio, rondas=4)
 
 
 @pytest.fixture
@@ -102,8 +119,9 @@ def token_de(repositorio, tokens):
 
 
 @pytest.fixture
-def cliente(repositorio, tokens):
+def cliente(repositorio, tokens, cuentas):
     app.dependency_overrides[obtener_repositorio] = lambda: repositorio
     app.dependency_overrides[obtener_tokens] = lambda: tokens
+    app.dependency_overrides[obtener_cuentas] = lambda: cuentas
     yield TestClient(app)
     app.dependency_overrides.clear()
