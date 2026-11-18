@@ -20,9 +20,15 @@
 | `POST /sesiones` | Inicia sesión con `{"correo", "contrasena"}` | 201 `{token, tipo, expiraEn, usuario}` · 401 `credenciales_invalidas` |
 | `GET /sesiones/actual` | Quién tiene la sesión (con `Authorization: Bearer <token>`) | 200 usuario · 401 |
 | `DELETE /sesiones/actual` | Cierra la sesión: el PDP niega ese token desde ese momento | 204 · 401 |
+| `GET /usuarios` | Lista las cuentas internas con su rol (solo ADMINISTRADOR) | 200 · 401 · 403 |
+| `PUT /usuarios/{id}/rol` | Asigna un rol con `{"rol": "AUDITOR"}`, o lo quita con `{"rol": null}` (solo ADMINISTRADOR) | 200 · 403 · 404 · 409 · 422 |
 
 El token es un JWT firmado con `JWT_SECRET` que dura `TOKEN_MINUTOS` (60 por defecto).
 Si el correo o la contraseña fallan, la respuesta es la misma: no dice cuál dato falló (HU-01).
+
+Al cambiar un rol (HU-02), los permisos cambian desde la siguiente petición, aunque el usuario
+no cierre sesión. Cada cambio queda en `identidad.cambio_rol` (quién, a quién, de qué rol a cuál
+y cuándo), que es de solo inserción. Un administrador no puede quitarse su propio rol (409).
 
 ## Usuarios de demostración (SOLO desarrollo local)
 
@@ -30,7 +36,7 @@ Los crea la migración `0001`. Contraseña de todos: `BioHub2026!`
 
 | Correo | Rol | id |
 |---|---|---|
-| `investigador@biohub.local` | INVESTIGADOR | `00000000-0000-0000-0000-0000000000aa` (= `INVESTIGADOR_PRUEBA_ID` de Registro) |
+| `investigador@biohub.local` | INVESTIGADOR | `00000000-0000-0000-0000-0000000000aa` (el mismo de los datos de prueba de Registro) |
 | `cientifico@biohub.local` | CIENTIFICO_AUTORIZADO | `...0000ab` |
 | `altorango@biohub.local` | ALTO_RANGO | `...0000ac` |
 | `auditor@biohub.local` | AUDITOR | `...0000ad` |

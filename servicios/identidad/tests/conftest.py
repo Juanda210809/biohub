@@ -1,4 +1,5 @@
 """Falsos y fixtures compartidos: las pruebas de Identidad no usan la base de datos real."""
+from dataclasses import replace
 from uuid import UUID
 
 import pytest
@@ -7,6 +8,7 @@ from fastapi.testclient import TestClient
 from app.api.dependencias import obtener_repositorio, obtener_tokens
 from app.dominio.autenticacion import ServicioAutenticacion
 from app.dominio.contrasenas import hashear
+from app.dominio.cuentas import ServicioCuentas
 from app.dominio.tokens import ServicioTokens
 from app.dominio.usuarios import Rol, Usuario
 from app.main import app
@@ -44,6 +46,7 @@ class RepositorioFalso:
         ]
         self.usuarios = {u.id: u for u in usuarios}
         self.revocadas: dict[UUID, UUID] = {}
+        self.cambios_rol: list[tuple] = []
 
     def por_rol(self, rol: Rol | None) -> Usuario:
         return next(u for u in self.usuarios.values() if u.rol == rol)
@@ -63,6 +66,14 @@ class RepositorioFalso:
     def revocar_sesion(self, jti, usuario_id, expira_en):
         self.revocadas[jti] = usuario_id
 
+    def listar(self):
+        return sorted(self.usuarios.values(), key=lambda u: u.correo)
+
+    def cambiar_rol(self, usuario_id, rol_anterior, rol_nuevo, actor_id):
+        self.cambios_rol.append((usuario_id, rol_anterior, rol_nuevo, actor_id))
+        self.usuarios[usuario_id] = replace(self.usuarios[usuario_id], rol=rol_nuevo)
+        return self.usuarios[usuario_id]
+
 
 @pytest.fixture
 def repositorio():
@@ -77,6 +88,11 @@ def tokens():
 @pytest.fixture
 def autenticacion(repositorio, tokens):
     return ServicioAutenticacion(repositorio, tokens)
+
+
+@pytest.fixture
+def cuentas(repositorio):
+    return ServicioCuentas(repositorio)
 
 
 @pytest.fixture
