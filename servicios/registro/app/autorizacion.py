@@ -18,6 +18,8 @@ import httpx
 
 from app.config import IDENTIDAD_URL
 
+MOTIVO_PDP_NO_DISPONIBLE = "PDP no disponible o respuesta inválida: se niega"
+
 
 @dataclass(frozen=True)
 class DecisionPDP:
@@ -37,7 +39,9 @@ def autorizar(token: str, accion: str, recurso: str | None = None) -> DecisionPD
             json={"token": token, "accion": accion, "recurso": recurso},
             timeout=2.0,
         )
-        datos = respuesta.json() if respuesta.status_code == 200 else {}
+        if respuesta.status_code != 200:
+            return DecisionPDP(False, f"{MOTIVO_PDP_NO_DISPONIBLE} (HTTP {respuesta.status_code})")
+        datos = respuesta.json()
         if datos.get("decision") != "PERMITIR":
             return DecisionPDP(False, datos.get("motivo") or "Denegado por el PDP")
         return DecisionPDP(
@@ -47,5 +51,5 @@ def autorizar(token: str, accion: str, recurso: str | None = None) -> DecisionPD
             rol=datos.get("rol"),
             nivel_ubicacion=datos.get("nivelUbicacion", "REGION"),
         )
-    except (httpx.HTTPError, ValueError, KeyError, TypeError, AttributeError):
-        return DecisionPDP(False, "PDP no disponible o respuesta inválida: se niega")
+    except (httpx.HTTPError, ValueError, KeyError, TypeError, AttributeError) as error:
+        return DecisionPDP(False, f"{MOTIVO_PDP_NO_DISPONIBLE} ({type(error).__name__})")

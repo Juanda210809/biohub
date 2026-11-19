@@ -99,3 +99,21 @@ def test_si_el_pdp_no_responde_se_niega(monkeypatch, error):
     pdp_falla(monkeypatch, error)
 
     assert autorizar("token", "registrar_hallazgo").permitido is False
+
+
+
+def test_estado_distinto_de_200_se_marca_como_pdp_no_disponible(monkeypatch):
+    pdp_responde(monkeypatch, httpx.Response(503, json={"detail": "saturado"}))
+
+    decision = autorizar("token", "registrar_hallazgo")
+
+    assert decision.permitido is False
+    assert decision.motivo == "PDP no disponible o respuesta inválida: se niega (HTTP 503)"
+
+
+def test_el_motivo_incluye_el_tipo_de_error_de_red(monkeypatch):
+    pdp_falla(monkeypatch, httpx.ReadTimeout("tardó más de 2 s"))
+
+    decision = autorizar("token", "registrar_hallazgo")
+
+    assert decision.motivo == "PDP no disponible o respuesta inválida: se niega (ReadTimeout)"

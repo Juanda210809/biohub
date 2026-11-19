@@ -1,4 +1,5 @@
 """Rutas de HU-03: consultar la ficha de un tipo de especie y registrar un hallazgo."""
+import logging
 from collections.abc import Callable
 from typing import Annotated
 from uuid import UUID
@@ -21,6 +22,8 @@ from app.dominio.servicio_hallazgos import (
 from app.repositorio.hallazgos import RepositorioHallazgos
 
 ACCION_PDP = "registrar_hallazgo"
+
+registro = logging.getLogger(__name__)
 
 Autorizador = Callable[[str, str, str | None], DecisionPDP]
 
@@ -76,6 +79,9 @@ def registrar_hallazgo(
     token = extraer_token(credenciales)
     decision = autorizador(token, ACCION_PDP, None)
     if not decision.permitido:
+        # El motivo solo va al log (nunca al cliente ni el token): sirve para distinguir
+        # "PDP no disponible" de un rol incorrecto o un token vencido (HU-21).
+        registro.warning("registrar_hallazgo denegado (403): motivo del PDP = %s", decision.motivo)
         raise ErrorApi(403, "sin_permiso", "No tiene permiso para registrar hallazgos")
 
     datos = NuevoHallazgo(
