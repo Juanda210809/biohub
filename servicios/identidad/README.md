@@ -20,8 +20,14 @@
 | `POST /sesiones` | Inicia sesión con `{"correo", "contrasena"}` | 201 `{token, tipo, expiraEn, usuario}` · 401 `credenciales_invalidas` |
 | `GET /sesiones/actual` | Quién tiene la sesión (con `Authorization: Bearer <token>`) | 200 usuario · 401 |
 | `DELETE /sesiones/actual` | Cierra la sesión: el PDP niega ese token desde ese momento | 204 · 401 |
-| `GET /usuarios` | Lista las cuentas internas con su rol (solo ADMINISTRADOR) | 200 · 401 · 403 |
-| `PUT /usuarios/{id}/rol` | Asigna un rol con `{"rol": "AUDITOR"}`, o lo quita con `{"rol": null}` (solo ADMINISTRADOR) | 200 · 403 · 404 · 409 · 422 |
+| `GET /usuarios` | Lista las cuentas internas (activas y desactivadas) con su rol | 200 · 401 · 403 |
+| `POST /usuarios` | Crea una cuenta con `{"nombre", "correo", "contrasena"}`: nace activa y sin rol | 201 · 403 · 409 · 422 |
+| `PATCH /usuarios/{id}` | Cambia `nombre`, `correo` y/o `contrasena` (solo los que lleguen) | 200 · 403 · 404 · 409 · 422 |
+| `POST /usuarios/{id}/desactivar` | Desactiva la cuenta: no inicia sesión y el PDP le niega todo | 200 · 403 · 404 · 409 |
+| `POST /usuarios/{id}/activar` | Vuelve a habilitar una cuenta desactivada | 200 · 403 · 404 |
+| `PUT /usuarios/{id}/rol` | Asigna un rol con `{"rol": "AUDITOR"}`, o lo quita con `{"rol": null}` | 200 · 403 · 404 · 409 · 422 |
+
+Todas las rutas de `/usuarios` son solo para ADMINISTRADOR (acción `gestionar_usuarios` del PDP).
 
 El token es un JWT firmado con `JWT_SECRET` que dura `TOKEN_MINUTOS` (60 por defecto).
 Si el correo o la contraseña fallan, la respuesta es la misma: no dice cuál dato falló (HU-01).
@@ -29,6 +35,11 @@ Si el correo o la contraseña fallan, la respuesta es la misma: no dice cuál da
 Al cambiar un rol (HU-02), los permisos cambian desde la siguiente petición, aunque el usuario
 no cierre sesión. Cada cambio queda en `identidad.cambio_rol` (quién, a quién, de qué rol a cuál
 y cuándo), que es de solo inserción. Un administrador no puede quitarse su propio rol (409).
+
+Las cuentas nunca se borran, solo se desactivan (HU-18): la base no permite `DELETE` en
+`identidad.usuario`, así que el autor de cada versión de un hallazgo siempre se puede consultar (RNF-09).
+Una cuenta desactivada no puede iniciar sesión y sus sesiones abiertas dejan de servir de inmediato.
+Un administrador no puede desactivar su propia cuenta (409). El correo es único sin importar mayúsculas (409).
 
 ## Usuarios de demostración (SOLO desarrollo local)
 
