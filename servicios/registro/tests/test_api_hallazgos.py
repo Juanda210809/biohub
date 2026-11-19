@@ -19,6 +19,17 @@ def test_sin_permiso_responde_403_y_no_guarda(cliente, repositorio, autorizador,
     assert respuesta.json()["codigo"] == "sin_permiso"
     assert repositorio.registrado is None
 
+def test_el_403_registra_el_motivo_en_el_log_pero_no_lo_muestra(
+    cliente, autorizador, cuerpo, caplog
+):
+    autorizador.permitir = False
+
+    respuesta = cliente.post("/hallazgos", json=cuerpo, headers=CABECERA)
+
+    assert "Denegado por el falso" in caplog.text
+    assert "token-de-prueba" not in caplog.text
+    assert "Denegado por el falso" not in respuesta.text
+
 
 def test_registra_el_hallazgo_y_responde_201(cliente, repositorio, autorizador, cuerpo):
     respuesta = cliente.post("/hallazgos", json=cuerpo, headers=CABECERA)
