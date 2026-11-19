@@ -17,6 +17,7 @@ app.include_router(ejemplo.router)
 app.include_router(externa.router)
 app.include_router(fichas.router)
 
+
 @app.get("/salud", tags=["salud"])
 def salud():
     """Indica si el servicio está vivo y si llega a su base de datos."""
