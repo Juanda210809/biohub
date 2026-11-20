@@ -25,7 +25,7 @@ PICO_SEGUNDOS = int(os.getenv("PICO_SEGUNDOS", "600"))
 PICO_VISITANTES = int(os.getenv("PICO_VISITANTES", "60"))  # 60x el tráfico normal (1 visitante)
 REGISTROS_POR_SEGUNDO = float(os.getenv("REGISTROS_POR_SEGUNDO", "2"))
 
-META_P95_FICHA_MS = 2000
+META_FICHA_MS = 2000
 META_EXITO_REGISTRO = 0.999
 
 # Cuerpo acordado con Peña (ficha de Anfibio).
@@ -158,23 +158,30 @@ def _resumen(environment, **_):
             f"  Ficha pública: {ficha.num_requests} peticiones, {ficha.num_failures} fallos, "
             f"p50 {ficha.get_response_time_percentile(0.5):.0f} ms, "
             f"p95 {ficha.get_response_time_percentile(0.95):.0f} ms, "
+            f"p99 {ficha.get_response_time_percentile(0.99):.0f} ms, "
             f"{ficha.num_requests / duracion:.1f} pet/s"
         )
         print(
             f"  Registro:      {registro.num_requests} peticiones, "
             f"{_exito(registro) * 100:.2f} % con 201, "
             f"p50 {registro.get_response_time_percentile(0.5):.0f} ms, "
-            f"p95 {registro.get_response_time_percentile(0.95):.0f} ms"
+            f"p95 {registro.get_response_time_percentile(0.95):.0f} ms, "
+            f"p99 {registro.get_response_time_percentile(0.99):.0f} ms"
         )
 
     ficha = fila(FICHA, "GET", "pico")
     registro = fila(REGISTRO, "POST", "pico")
     p95 = ficha.get_response_time_percentile(0.95)
+    p99 = ficha.get_response_time_percentile(0.99)
     exito = _exito(registro)
     print("\nVEREDICTO")
     print(
-        f"  HU-20 ficha p95 < {META_P95_FICHA_MS} ms en el pico: "
-        f"{_veredicto(p95 < META_P95_FICHA_MS)} ({p95:.0f} ms)"
+        f"  HU-20 ficha p95 < {META_FICHA_MS} ms en el pico (SRS RNF-02): "
+        f"{_veredicto(p95 < META_FICHA_MS)} ({p95:.0f} ms)"
+    )
+    print(
+        f"  HU-20 ficha p99 < {META_FICHA_MS} ms en el pico (criterio en Jira): "
+        f"{_veredicto(p99 < META_FICHA_MS)} ({p99:.0f} ms)"
     )
     print(
         f"  HU-21 registro >= 99,9 % con 201 en el pico: "
