@@ -1,7 +1,7 @@
-"""Acceso de Registro a la base de datos: fichas, especies y la creación de un hallazgo.
+﻿"""Acceso de Registro a la base de datos: fichas, especies y la creaciÃ³n de un hallazgo.
 
-La sesión llega desde afuera (no se crea aquí), así las pruebas pueden darle una falsa.
-Todo es SQL explícito con text(): el INSERT de la versión 1 no puede usar RETURNING porque
+La sesiÃ³n llega desde afuera (no se crea aquÃ­), asÃ­ las pruebas pueden darle una falsa.
+Todo es SQL explÃ­cito con text(): el INSERT de la versiÃ³n 1 no puede usar RETURNING porque
 Registro no tiene permiso de SELECT sobre gobernanza.hallazgo_version.
 """
 import json
@@ -14,6 +14,7 @@ from app.dominio.hallazgos import Especie, FichaVigente, NuevoHallazgo
 from app.dominio.validadores import DefinicionAtributo, TipoAtributo
 
 ACCION_REGISTRAR = "registrar_hallazgo"
+ACCION_CONSULTAR_UBICACION = "CONSULTA_UBICACION"
 JUSTIFICACION_INICIAL = "Registro inicial"
 
 SQL_HALLAZGO = text(
@@ -61,11 +62,78 @@ SQL_AUDITORIA = text(
     VALUES (:id, :actor_id, :accion, :recurso_id)
     """
 )
+SQL_UBICACION_GENERAL = text(
+    """
+    SELECT h.region, h.departamento
+    FROM campo.hallazgo h
+    WHERE h.id = :hallazgo_id
+    """
+)
 
+SQL_UBICACION_EXACTA = text(
+    """
+    SELECT h.region, h.departamento,
+           u.latitud, u.longitud, u.precision_m
+    FROM campo.hallazgo h
+    JOIN campo.ubicacion u ON u.hallazgo_id = h.id
+    WHERE h.id = :hallazgo_id
+    """
+)
 
 class RepositorioHallazgos:
     def __init__(self, sesion: Session) -> None:
         self._sesion = sesion
+
+    def obtener_ubicacion(
+        self,
+        hallazgo_id: UUID,
+        actor_id: UUID,
+        incluir_exacta: bool,
+    ) -> dict | None:
+        """Consulta la ubicaciÃ³n autorizada y registra el acceso en auditorÃ­a."""
+        consulta = SQL_UBICACION_EXACTA if incluir_exacta else SQL_UBICACION_GENERAL
+
+        try:
+            fila = self._sesion.execute(
+                consulta,
+                {"hallazgo_id": hallazgo_id},
+            ).first()
+
+            # Si el hallazgo no existe, no se registra una consulta exitosa.
+            if fila is None:
+                return None
+
+            self._sesion.execute(
+                SQL_AUDITORIA,
+                {
+                    "id": uuid4(),
+                    "actor_id": actor_id,
+                    "accion": ACCION_CONSULTAR_UBICACION,
+                    "recurso_id": hallazgo_id,
+                },
+            )
+            self._sesion.commit()
+
+        except Exception:
+            self._sesion.rollback()
+            raise
+
+        resultado = {
+            "hallazgo_id": hallazgo_id,
+            "nivel_ubicacion": "EXACTA" if incluir_exacta else "REGION",
+            "region": fila.region,
+            "departamento": fila.departamento,
+        }
+
+        if incluir_exacta:
+            resultado.update({
+                "latitud": fila.latitud,
+                "longitud": fila.longitud,
+                "precision_m": fila.precision_m,
+            })
+
+        return resultado
+
 
     def obtener_especie(self, especie_id: UUID) -> Especie | None:
         fila = self._sesion.execute(
@@ -83,7 +151,7 @@ class RepositorioHallazgos:
         return fila is not None
 
     def definiciones_vigentes(self, tipo_especie_id: UUID) -> list[DefinicionAtributo]:
-        """Atributos de la revisión PUBLICADA (la vigente) de la ficha de un tipo de especie."""
+        """Atributos de la revisiÃ³n PUBLICADA (la vigente) de la ficha de un tipo de especie."""
         filas = self._sesion.execute(
             text(
                 """
@@ -123,7 +191,7 @@ class RepositorioHallazgos:
     def registrar(
         self, datos: NuevoHallazgo, nombre_especie: str, publicos: dict
     ) -> UUID:
-        """Guarda el hallazgo completo en UNA transacción: o queda todo o no queda nada."""
+        """Guarda el hallazgo completo en UNA transacciÃ³n: o queda todo o no queda nada."""
         hallazgo_id = uuid4()
         try:
             self._sesion.execute(

@@ -49,3 +49,12 @@ class FichaSalida(EsquemaBase):
     nombre: str
     revision: int
     atributos: list[AtributoFicha]
+
+class UbicacionSalida(EsquemaBase):
+    hallazgo_id: UUID
+    nivel_ubicacion: str
+    region: str | None = None
+    departamento: str | None = None
+    latitud: Decimal | None = None
+    longitud: Decimal | None = None
+    precision_m: Decimal | None = None

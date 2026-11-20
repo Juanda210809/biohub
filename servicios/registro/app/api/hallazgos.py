@@ -8,7 +8,13 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.api.errores import ErrorApi
-from app.api.esquemas import AtributoFicha, FichaSalida, HallazgoCreado, HallazgoEntrada
+from app.api.esquemas import (
+    AtributoFicha,
+    FichaSalida,
+    HallazgoCreado,
+    HallazgoEntrada,
+    UbicacionSalida,
+)
 from app.autorizacion import DecisionPDP, autorizar
 from app.db import obtener_sesion
 from app.dominio.hallazgos import NuevoHallazgo
@@ -21,6 +27,7 @@ from app.dominio.servicio_hallazgos import (
 from app.repositorio.hallazgos import RepositorioHallazgos
 
 ACCION_PDP = "registrar_hallazgo"
+ACCION_UBICACION_PDP = "ver_ubicacion_general"
 
 Autorizador = Callable[[str, str, str | None], DecisionPDP]
 
@@ -116,3 +123,54 @@ def registrar_hallazgo(
             422, "ficha_invalida", "Los atributos no cumplen la ficha de la especie", error.errores
         ) from None
     return HallazgoCreado(hallazgo_id=hallazgo_id, version=1)
+
+
+
+@router.get(
+    "/hallazgos/{hallazgo_id}/ubicacion",
+    response_model=UbicacionSalida,
+    response_model_exclude_none=True,
+)
+def obtener_ubicacion(
+    hallazgo_id: UUID,
+    repositorio: Annotated[RepositorioHallazgos, Depends(obtener_repositorio)],
+    autorizador: Annotated[Autorizador, Depends(obtener_autorizador)],
+    credenciales: Credenciales,
+) -> UbicacionSalida:
+    """Consulta la ubicación según el nivel autorizado por el PDP."""
+    token = extraer_token(credenciales)
+
+    decision = autorizador(
+        token,
+        ACCION_UBICACION_PDP,
+        str(hallazgo_id),
+    )
+
+    if not decision.permitido or decision.usuario_id is None:
+        raise ErrorApi(
+            403,
+            "sin_permiso",
+            "No tiene permiso para consultar la ubicación",
+        )
+
+    if decision.nivel_ubicacion not in ("REGION", "EXACTA"):
+        raise ErrorApi(
+            403,
+            "nivel_ubicacion_invalido",
+            "El PDP devolvió un nivel de ubicación inválido",
+        )
+
+    ubicacion = repositorio.obtener_ubicacion(
+        hallazgo_id=hallazgo_id,
+        actor_id=decision.usuario_id,
+        incluir_exacta=decision.nivel_ubicacion == "EXACTA",
+    )
+
+    if ubicacion is None:
+        raise ErrorApi(
+            404,
+            "hallazgo_no_existe",
+            "No se encontró el hallazgo indicado",
+        )
+
+    return UbicacionSalida(**ubicacion)

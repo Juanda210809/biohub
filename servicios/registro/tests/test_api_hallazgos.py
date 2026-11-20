@@ -124,3 +124,77 @@ def test_ficha_inexistente_responde_404(cliente, repositorio):
 
     assert respuesta.status_code == 404
     assert respuesta.json()["codigo"] == "ficha_no_existe"
+
+def test_consulta_ubicacion_sin_token_responde_401(cliente, repositorio, autorizador):
+    respuesta = cliente.get(
+        f"/hallazgos/{repositorio.hallazgo_id}/ubicacion"
+    )
+
+    assert respuesta.status_code == 401
+    assert autorizador.llamadas == []
+    assert repositorio.ubicacion_consultada is None
+
+
+def test_consulta_ubicacion_sin_permiso_responde_403(
+    cliente, repositorio, autorizador
+):
+    autorizador.permitir = False
+
+    respuesta = cliente.get(
+        f"/hallazgos/{repositorio.hallazgo_id}/ubicacion",
+        headers=CABECERA,
+    )
+
+    assert respuesta.status_code == 403
+    assert repositorio.ubicacion_consultada is None
+
+
+def test_usuario_con_nivel_region_no_recibe_coordenadas(
+    cliente, repositorio, autorizador
+):
+    autorizador.nivel_ubicacion = "REGION"
+
+    respuesta = cliente.get(
+        f"/hallazgos/{repositorio.hallazgo_id}/ubicacion",
+        headers=CABECERA,
+    )
+
+    assert respuesta.status_code == 200
+
+    ubicacion = respuesta.json()
+
+    assert ubicacion["nivelUbicacion"] == "REGION"
+    assert ubicacion["region"] == "Pacifico"
+    assert ubicacion["departamento"] == "Cauca"
+    assert "latitud" not in ubicacion
+    assert "longitud" not in ubicacion
+    assert repositorio.incluir_exacta is False
+
+    assert autorizador.llamadas == [
+        ("token-de-prueba", "ver_ubicacion_general", str(repositorio.hallazgo_id))
+    ]
+
+
+def test_usuario_con_nivel_exacto_recibe_coordenadas(
+    cliente, repositorio, autorizador
+):
+    autorizador.nivel_ubicacion = "EXACTA"
+
+    respuesta = cliente.get(
+        f"/hallazgos/{repositorio.hallazgo_id}/ubicacion",
+        headers=CABECERA,
+    )
+
+    assert respuesta.status_code == 200
+
+    ubicacion = respuesta.json()
+
+    assert ubicacion["nivelUbicacion"] == "EXACTA"
+    assert float(ubicacion["latitud"]) == 2.512345
+    assert float(ubicacion["longitud"]) == -77.123456
+    assert float(ubicacion["precisionM"]) == 5
+    assert repositorio.incluir_exacta is True
+    assert repositorio.ubicacion_consultada == (
+        repositorio.hallazgo_id,
+        autorizador.usuario_id,
+    )

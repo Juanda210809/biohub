@@ -95,3 +95,26 @@ def test_si_la_base_falla_se_niega(cliente, repositorio, token_de):
 def test_mantiene_los_campos_que_leen_los_demas_servicios(cliente, token_de):
     respuesta = preguntar(cliente, "registrar_hallazgo", token_de(Rol.INVESTIGADOR), recurso=None)
     assert {"decision", "motivo"} <= respuesta.keys()
+
+@pytest.mark.parametrize(
+    "rol, nivel_esperado",
+    [
+        (Rol.INVESTIGADOR, "REGION"),
+        (Rol.CIENTIFICO_AUTORIZADO, "REGION"),
+        (Rol.ALTO_RANGO, "EXACTA"),
+        (Rol.AUDITOR, "REGION"),
+        (Rol.ADMINISTRADOR, "REGION"),
+    ],
+)
+def test_ubicacion_general_respeta_el_nivel_segun_el_rol(
+    cliente, token_de, rol, nivel_esperado
+):
+    respuesta = preguntar(
+        cliente,
+        "ver_ubicacion_general",
+        token_de(rol),
+        recurso="80b22314-d956-4eb1-a17a-0f3bd23f23f2",
+    )
+
+    assert respuesta["decision"] == "PERMITIR"
+    assert respuesta["nivelUbicacion"] == nivel_esperado
