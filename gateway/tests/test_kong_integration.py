@@ -142,28 +142,57 @@ def test_external_route_authenticates_and_forwards_to_consulta(kong_gateway):
     assert internal.status_code == 403
 
 
+def minute_of(response):
+    return parsedate_to_datetime(response.headers["date"]).replace(second=0, microsecond=0)
+
+
+def start_inside_a_minute(client, kong_gateway):
+    """Empieza en la primera mitad del minuto de Kong, lejos del cambio de minuto."""
+    server_time = parsedate_to_datetime(client.get(f"{kong_gateway}/").headers["date"])
+    if server_time.second > 30:
+        time.sleep(61 - server_time.second)
+
+
+def wait_for_next_minute(response):
+    time.sleep(61 - parsedate_to_datetime(response.headers["date"]).second)
+
+
+# Kong suma cada petición al contador de la cuota en un temporizador aparte
+# (rate-limiting/handler.lua: timer_at(0, increment, ...)). Si la petición 61 llega antes
+# de que se aplique la suma de la 60, Kong todavía ve 59 usos y la deja pasar. Esta pausa
+# deja aplicar las sumas pendientes antes de la petición que debe ser rechazada.
+SETTLE_SECONDS = 0.5
+
+
 def test_external_rate_limit_rejects_request_61_before_upstream(kong_gateway):
     import httpx
 
     url = f"{kong_gateway}/externa/v1/hallazgos"
     with httpx.Client(timeout=5) as client:
-        # Start well inside the server's minute window, not at its boundary.
-        server_time = parsedate_to_datetime(client.get(f"{kong_gateway}/").headers["date"])
-        if server_time.second > 30:
-            time.sleep(61 - server_time.second)
-        responses = [
-            client.get(url, headers={"apikey": API_KEY if index % 2 else "test-second-key-same-consumer"})
-            for index in range(60)
-        ]
-        other_consumer = client.get(url, headers={"apikey": "clave-demo-universidad-2"})
-        over_limit = client.get(
-            url,
-            headers={
-                "apikey": API_KEY,
-                "X-Consumer-ID": "forged-consumer",
-                "X-Forwarded-For": "203.0.113.10",
-            },
-        )
+        # La cuota es por minuto: si la tanda cruza el cambio de minuto, el contador
+        # se reinicia y el resultado no prueba nada. En ese caso se repite (max. 3).
+        for _attempt in range(3):
+            start_inside_a_minute(client, kong_gateway)
+            EchoHandler.requests = 0
+            responses = [
+                client.get(url, headers={"apikey": API_KEY if index % 2 else "test-second-key-same-consumer"})
+                for index in range(60)
+            ]
+            time.sleep(SETTLE_SECONDS)
+            other_consumer = client.get(url, headers={"apikey": "clave-demo-universidad-2"})
+            over_limit = client.get(
+                url,
+                headers={
+                    "apikey": API_KEY,
+                    "X-Consumer-ID": "forged-consumer",
+                    "X-Forwarded-For": "203.0.113.10",
+                },
+            )
+            if minute_of(responses[0]) == minute_of(over_limit):
+                break
+            wait_for_next_minute(over_limit)
+        else:
+            pytest.fail("No se pudieron enviar 62 peticiones dentro del mismo minuto")
 
     assert all(response.status_code == 200 for response in responses)
     assert other_consumer.status_code == 200
@@ -178,22 +207,18 @@ def test_consumer_can_read_its_quota_in_every_response(kong_gateway):
 
     url = f"{kong_gateway}/externa/v1/hallazgos"
 
-    def minute_of(response):
-        return parsedate_to_datetime(response.headers["date"]).replace(second=0, microsecond=0)
-
     with httpx.Client(timeout=5) as client:
         # La cuota es por minuto: si la tanda cruza el cambio de minuto, el contador
         # se reinicia y el resultado no prueba nada. En ese caso se repite (max. 3).
         for _attempt in range(3):
-            server_time = parsedate_to_datetime(client.get(f"{kong_gateway}/").headers["date"])
-            if server_time.second > 30:
-                time.sleep(61 - server_time.second)
+            start_inside_a_minute(client, kong_gateway)
             EchoHandler.requests = 0
             responses = [client.get(url, headers={"apikey": API_KEY}) for _ in range(60)]
+            time.sleep(SETTLE_SECONDS)
             over_limit = client.get(url, headers={"apikey": API_KEY})
             if minute_of(responses[0]) == minute_of(over_limit):
                 break
-            time.sleep(61 - parsedate_to_datetime(over_limit.headers["date"]).second)
+            wait_for_next_minute(over_limit)
         else:
             pytest.fail("No se pudieron enviar 61 peticiones dentro del mismo minuto")
 
