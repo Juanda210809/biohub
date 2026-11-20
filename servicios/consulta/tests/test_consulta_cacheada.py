@@ -6,6 +6,7 @@ from uuid import UUID
 
 import pytest
 
+from app import cache
 from app.dominio import servicio_fichas
 from app.dominio.servicio_fichas import ConsultaBD, ConsultaCacheada, armar_consulta
 
@@ -131,3 +132,15 @@ def test_armar_consulta_pone_la_cache_delante_de_la_base():
 
     assert isinstance(consulta, ConsultaCacheada)
     assert isinstance(consulta._interna, ConsultaBD)
+
+
+def test_la_ficha_queda_en_redis_300_segundos(monkeypatch):
+    """El decorador guarda con la función real de app/cache.py, que usa SETEX con 300 s."""
+    redis = Mock()
+    redis.get.return_value = None
+    monkeypatch.setattr(cache, "cliente_redis", lambda: redis)
+
+    ConsultaCacheada(ConsultaFalsa(FICHA)).obtener_ficha(ID)
+
+    redis.setex.assert_called_once_with(CLAVE, 300, json.dumps(FICHA, ensure_ascii=False))
+    assert cache.TIEMPO_CACHE == 300
