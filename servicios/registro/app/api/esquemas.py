@@ -54,6 +54,15 @@ class FichaSalida(EsquemaBase):
     revision: int
     atributos: list[AtributoFicha]
 
+class UbicacionSalida(EsquemaBase):
+    hallazgo_id: UUID
+    nivel_ubicacion: str
+    region: str | None = None
+    departamento: str | None = None
+    latitud: Decimal | None = None
+    longitud: Decimal | None = None
+    precision_m: Decimal | None = None
+
 
 def ficha_a_salida(ficha: FichaVigente) -> FichaSalida:
     """Convierte la ficha del dominio en la respuesta de la API (la usan el GET y el PUT)."""

@@ -46,3 +46,7 @@ def test_solo_alto_rango_tiene_nivel_exacto(rol):
     esperado = NivelUbicacion.EXACTA if rol == Rol.ALTO_RANGO else NivelUbicacion.REGION
     assert decision.permitir is True
     assert decision.nivel_ubicacion == esperado
+
+@pytest.mark.parametrize("rol", TODOS_LOS_ROLES)
+def test_todos_los_roles_autenticados_pueden_ver_ubicacion_general(rol):
+    assert rol in PERMISOS["ver_ubicacion_general"]

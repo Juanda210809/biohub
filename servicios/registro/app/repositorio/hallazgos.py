@@ -14,6 +14,8 @@ from app.dominio.hallazgos import Especie, FichaVigente, NuevoHallazgo
 from app.dominio.validadores import DefinicionAtributo, TipoAtributo
 
 ACCION_REGISTRAR = "registrar_hallazgo"
+ACCION_VER_UBICACION_EXACTA = "ver_ubicacion_exacta"
+ACCION_VER_UBICACION_GENERAL = "ver_ubicacion_general"
 JUSTIFICACION_INICIAL = "Registro inicial"
 
 SQL_HALLAZGO = text(
@@ -61,11 +63,83 @@ SQL_AUDITORIA = text(
     VALUES (:id, :actor_id, :accion, :recurso_id)
     """
 )
+SQL_UBICACION_GENERAL = text(
+    """
+    SELECT h.region, h.departamento
+    FROM campo.hallazgo h
+    WHERE h.id = :hallazgo_id
+    """
+)
 
+SQL_UBICACION_EXACTA = text(
+    """
+    SELECT h.region, h.departamento,
+           u.latitud, u.longitud, u.precision_m
+    FROM campo.hallazgo h
+    JOIN campo.ubicacion u ON u.hallazgo_id = h.id
+    WHERE h.id = :hallazgo_id
+    """
+)
 
 class RepositorioHallazgos:
     def __init__(self, sesion: Session) -> None:
         self._sesion = sesion
+
+    def obtener_ubicacion(
+        self,
+        hallazgo_id: UUID,
+        actor_id: UUID,
+        incluir_exacta: bool,
+    ) -> dict | None:
+        """Consulta la ubicación autorizada y registra el acceso en auditoría."""
+        consulta = SQL_UBICACION_EXACTA if incluir_exacta else SQL_UBICACION_GENERAL
+        accion = (
+            ACCION_VER_UBICACION_EXACTA
+            if incluir_exacta
+            else ACCION_VER_UBICACION_GENERAL
+        )
+
+        try:
+            fila = self._sesion.execute(
+                consulta,
+                {"hallazgo_id": hallazgo_id},
+            ).first()
+
+            # Si el hallazgo no existe, no se registra una consulta exitosa.
+            if fila is None:
+                return None
+
+            self._sesion.execute(
+                SQL_AUDITORIA,
+                {
+                    "id": uuid4(),
+                    "actor_id": actor_id,
+                    "accion": accion,
+                    "recurso_id": hallazgo_id,
+                },
+            )
+            self._sesion.commit()
+
+        except Exception:
+            self._sesion.rollback()
+            raise
+
+        resultado = {
+            "hallazgo_id": hallazgo_id,
+            "nivel_ubicacion": "EXACTA" if incluir_exacta else "REGION",
+            "region": fila.region,
+            "departamento": fila.departamento,
+        }
+
+        if incluir_exacta:
+            resultado.update({
+                "latitud": fila.latitud,
+                "longitud": fila.longitud,
+                "precision_m": fila.precision_m,
+            })
+
+        return resultado
+
 
     def obtener_especie(self, especie_id: UUID) -> Especie | None:
         fila = self._sesion.execute(

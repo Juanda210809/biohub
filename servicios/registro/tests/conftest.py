@@ -1,3 +1,4 @@
+
 """Falsos y fixtures compartidos: las pruebas de Registro no usan base de datos ni el PDP real."""
 from datetime import date
 from decimal import Decimal
@@ -56,6 +57,10 @@ class RepositorioFalso:
         self.hallazgo_id = HALLAZGO_ID
         self.registrado = None
 
+        # Datos para comprobar las consultas de ubicación.
+        self.ubicacion_consultada = None
+        self.incluir_exacta = None
+
     def obtener_especie(self, especie_id):
         return self.especie
 
@@ -72,20 +77,50 @@ class RepositorioFalso:
         self.registrado = (datos, nombre_especie, publicos)
         return self.hallazgo_id
 
+    def obtener_ubicacion(self, hallazgo_id, actor_id, incluir_exacta):
+        """Simula la consulta de ubicación y permite comprobar el nivel solicitado."""
+        self.ubicacion_consultada = (hallazgo_id, actor_id)
+        self.incluir_exacta = incluir_exacta
+
+        resultado = {
+            "hallazgo_id": hallazgo_id,
+            "nivel_ubicacion": "EXACTA" if incluir_exacta else "REGION",
+            "region": "Pacifico",
+            "departamento": "Cauca",
+        }
+
+        if incluir_exacta:
+            resultado.update({
+                "latitud": Decimal("2.512345"),
+                "longitud": Decimal("-77.123456"),
+                "precision_m": Decimal("5"),
+            })
+
+        return resultado
+
 
 class AutorizadorFalso:
-    """Reemplaza al PDP: responde lo que le digas y recuerda con qué le preguntaron."""
+    """Reemplaza al PDP y permite simular sus decisiones."""
 
     def __init__(self) -> None:
         self.permitir = True
         self.usuario_id = INVESTIGADOR_ID
+        self.nivel_ubicacion = "REGION"
         self.llamadas = []
 
     def __call__(self, token, accion, recurso):
         self.llamadas.append((token, accion, recurso))
+
         if not self.permitir:
             return DecisionPDP(False, "Denegado por el falso")
-        return DecisionPDP(True, "Permitido por el falso", self.usuario_id, "INVESTIGADOR")
+
+        return DecisionPDP(
+            True,
+            "Permitido por el falso",
+            self.usuario_id,
+            "INVESTIGADOR",
+            self.nivel_ubicacion,
+        )
 
 
 @pytest.fixture
@@ -102,7 +137,9 @@ def autorizador():
 def cliente(repositorio, autorizador):
     app.dependency_overrides[obtener_repositorio] = lambda: repositorio
     app.dependency_overrides[obtener_autorizador] = lambda: autorizador
+
     yield TestClient(app)
+
     app.dependency_overrides.clear()
 
 
@@ -119,7 +156,11 @@ def cuerpo():
         "region": "Pacifico",
         "departamento": "Cauca",
         "ecosistema": "Bosque humedo",
-        "atributos": {"temperaturaAgua": 18.5, "habitat": "quebrada", "observaciones": "cerca"},
+        "atributos": {
+            "temperaturaAgua": 18.5,
+            "habitat": "quebrada",
+            "observaciones": "cerca",
+        },
     }
 
 
@@ -137,5 +178,9 @@ def datos():
         region="Pacifico",
         departamento="Cauca",
         ecosistema="Bosque humedo",
-        atributos={"temperaturaAgua": 18.5, "habitat": "quebrada", "observaciones": "cerca"},
+        atributos={
+            "temperaturaAgua": 18.5,
+            "habitat": "quebrada",
+            "observaciones": "cerca",
+        },
     )

@@ -20,6 +20,13 @@ PERMISOS: dict[str, frozenset[Rol]] = {
     "registrar_hallazgo": frozenset({Rol.INVESTIGADOR}),
     "definir_ficha": frozenset({Rol.CIENTIFICO_AUTORIZADO}),
     "ver_ubicacion": frozenset({Rol.ALTO_RANGO}),
+    "ver_ubicacion_general": frozenset({
+    Rol.INVESTIGADOR,
+    Rol.CIENTIFICO_AUTORIZADO,
+    Rol.ALTO_RANGO,
+    Rol.AUDITOR,
+    Rol.ADMINISTRADOR,
+}),
     "reclasificar": frozenset({Rol.CIENTIFICO_AUTORIZADO}),
     "ver_historial": frozenset({Rol.AUDITOR}),
     "generar_reporte": frozenset({Rol.ALTO_RANGO}),
