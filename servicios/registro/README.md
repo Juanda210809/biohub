@@ -38,8 +38,17 @@ docker compose restart registro   # al arrancar aplica las migraciones pendiente
 
 - Escenario: durante el pico sobre `GET /api/v1/consulta/hallazgos/{id}`, se lanza `POST /api/v1/registro/hallazgos` con el token de `investigador@biohub.local`. La prueba de carga la escribe Matheus en `pruebas/` (comparte el pico con HU-20).
 - Meta: al menos el 99,9 % de los POST responde 201 (máximo 1 fallo por cada 1000). La latencia se reporta, sin meta.
-- Cuando Registro niega con 403, deja en su log el motivo del PDP (nunca el token ni se muestra al cliente). Un 403 por saturación se reconoce porque el motivo empieza con `PDP no disponible o respuesta inválida` (por ejemplo, `HTTP 503` o `ReadTimeout`). Se cuentan con `docker compose logs registro`.
+- Cuando Registro niega con 403, deja en su log el motivo del PDP (nunca el token ni se muestra al cliente). Un 403 por saturación del PDP tiene uno de dos motivos: `PDP no disponible o respuesta inválida: se niega (...)` (con `HTTP 503`, `ReadTimeout` o `ConnectError` al final) o `Error interno del PDP: se niega por seguridad` (este llega con 200 desde Identidad). Un 403 con otro motivo (rol incorrecto, sesión inválida) no es saturación. Se cuentan con `docker compose logs -t registro`, que incluye la hora.
 
 **Limitación:** la prueba local no demuestra aislamiento real de recursos, porque todos los contenedores comparten la CPU y la memoria del mismo PC.
 
-**Resultados de la medición:** pendientes. Matheus los registra en `pruebas/resultados.md`.
+**Resultados de la medición** (prueba de carga de Matheus, SCRUM-33; detalle en `pruebas/resultados.md`). Local, i5-12450H con 16 GB; durante 10 minutos de pico a 60× sobre la ficha pública, con 2 `POST /hallazgos` por segundo:
+
+| Medida | Resultado |
+|---|---|
+| POST con 201 durante el pico | 1201 de 1201 (100 %); la meta era al menos 99,9 % |
+| 403 en el log de Registro | 0, así que 0 por saturación del PDP |
+| Latencia sin pico (p50 / p95) | 68 ms / 80 ms |
+| Latencia durante el pico (p50 / p95) | 71 ms / 140 ms (la latencia no tiene meta) |
+
+**Conclusión:** en esta prueba el registro se mantuvo disponible durante el pico (criterios 1 y 3 de HU-21), y el PDP no se saturó. El criterio 2 (no compiten por los mismos recursos) se cumple por diseño, según la sección anterior. Quedan por la limitación: en un solo PC todos los contenedores comparten CPU, así que el resultado no demuestra aislamiento real de recursos.
