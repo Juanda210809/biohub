@@ -150,7 +150,7 @@ def _resumen(environment, **_):
     print("\n" + "=" * 72)
     print("RESUMEN DE LA PRUEBA (copiar en pruebas/resultados.md)")
     print("=" * 72)
-    for fase in ("base", "pico"):
+    for fase, duracion in (("base", BASE_SEGUNDOS), ("pico", PICO_SEGUNDOS)):
         ficha = fila(FICHA, "GET", fase)
         registro = fila(REGISTRO, "POST", fase)
         print(f"\n[{fase}]")
@@ -158,7 +158,7 @@ def _resumen(environment, **_):
             f"  Ficha pública: {ficha.num_requests} peticiones, {ficha.num_failures} fallos, "
             f"p50 {ficha.get_response_time_percentile(0.5):.0f} ms, "
             f"p95 {ficha.get_response_time_percentile(0.95):.0f} ms, "
-            f"{ficha.total_rps:.1f} pet/s"
+            f"{ficha.num_requests / duracion:.1f} pet/s"
         )
         print(
             f"  Registro:      {registro.num_requests} peticiones, "
