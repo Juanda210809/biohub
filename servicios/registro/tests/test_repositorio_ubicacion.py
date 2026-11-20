@@ -6,10 +6,10 @@ import pytest
 
 from app.repositorio.hallazgos import (
     ACCION_CONSULTAR_UBICACION,
-    RepositorioHallazgos,
     SQL_AUDITORIA,
     SQL_UBICACION_EXACTA,
     SQL_UBICACION_GENERAL,
+    RepositorioHallazgos,
 )
 
 HALLAZGO_ID = UUID("80b22314-d956-4eb1-a17a-0f3bd23f23f2")
