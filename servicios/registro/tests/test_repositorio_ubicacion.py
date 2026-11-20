@@ -5,7 +5,8 @@ from uuid import UUID
 import pytest
 
 from app.repositorio.hallazgos import (
-    ACCION_CONSULTAR_UBICACION,
+    ACCION_VER_UBICACION_EXACTA,
+    ACCION_VER_UBICACION_GENERAL,
     SQL_AUDITORIA,
     SQL_UBICACION_EXACTA,
     SQL_UBICACION_GENERAL,
@@ -61,7 +62,7 @@ def test_consulta_regional_registra_auditoria_sin_coordenadas(
     assert sesion.execute.call_args_list[0].args[0] == SQL_UBICACION_GENERAL
     assert sesion.execute.call_args_list[1].args[0] == SQL_AUDITORIA
     assert sesion.execute.call_args_list[1].args[1]["actor_id"] == ACTOR_ID
-    assert sesion.execute.call_args_list[1].args[1]["accion"] == ACCION_CONSULTAR_UBICACION
+    assert sesion.execute.call_args_list[1].args[1]["accion"] == ACCION_VER_UBICACION_GENERAL
     assert sesion.execute.call_args_list[1].args[1]["recurso_id"] == HALLAZGO_ID
     sesion.commit.assert_called_once()
 
@@ -82,6 +83,7 @@ def test_consulta_exacta_registra_auditoria_y_devuelve_coordenadas(
 
     assert sesion.execute.call_args_list[0].args[0] == SQL_UBICACION_EXACTA
     assert sesion.execute.call_args_list[1].args[0] == SQL_AUDITORIA
+    assert sesion.execute.call_args_list[1].args[1]["accion"] == ACCION_VER_UBICACION_EXACTA
     sesion.commit.assert_called_once()
 
 

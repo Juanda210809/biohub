@@ -1,7 +1,7 @@
-﻿"""Acceso de Registro a la base de datos: fichas, especies y la creaciÃ³n de un hallazgo.
+"""Acceso de Registro a la base de datos: fichas, especies y la creación de un hallazgo.
 
-La sesiÃ³n llega desde afuera (no se crea aquÃ­), asÃ­ las pruebas pueden darle una falsa.
-Todo es SQL explÃ­cito con text(): el INSERT de la versiÃ³n 1 no puede usar RETURNING porque
+La sesión llega desde afuera (no se crea aquí), así las pruebas pueden darle una falsa.
+Todo es SQL explícito con text(): el INSERT de la versión 1 no puede usar RETURNING porque
 Registro no tiene permiso de SELECT sobre gobernanza.hallazgo_version.
 """
 import json
@@ -14,7 +14,8 @@ from app.dominio.hallazgos import Especie, FichaVigente, NuevoHallazgo
 from app.dominio.validadores import DefinicionAtributo, TipoAtributo
 
 ACCION_REGISTRAR = "registrar_hallazgo"
-ACCION_CONSULTAR_UBICACION = "CONSULTA_UBICACION"
+ACCION_VER_UBICACION_EXACTA = "ver_ubicacion_exacta"
+ACCION_VER_UBICACION_GENERAL = "ver_ubicacion_general"
 JUSTIFICACION_INICIAL = "Registro inicial"
 
 SQL_HALLAZGO = text(
@@ -90,8 +91,13 @@ class RepositorioHallazgos:
         actor_id: UUID,
         incluir_exacta: bool,
     ) -> dict | None:
-        """Consulta la ubicaciÃ³n autorizada y registra el acceso en auditorÃ­a."""
+        """Consulta la ubicación autorizada y registra el acceso en auditoría."""
         consulta = SQL_UBICACION_EXACTA if incluir_exacta else SQL_UBICACION_GENERAL
+        accion = (
+            ACCION_VER_UBICACION_EXACTA
+            if incluir_exacta
+            else ACCION_VER_UBICACION_GENERAL
+        )
 
         try:
             fila = self._sesion.execute(
@@ -108,7 +114,7 @@ class RepositorioHallazgos:
                 {
                     "id": uuid4(),
                     "actor_id": actor_id,
-                    "accion": ACCION_CONSULTAR_UBICACION,
+                    "accion": accion,
                     "recurso_id": hallazgo_id,
                 },
             )
@@ -151,7 +157,7 @@ class RepositorioHallazgos:
         return fila is not None
 
     def definiciones_vigentes(self, tipo_especie_id: UUID) -> list[DefinicionAtributo]:
-        """Atributos de la revisiÃ³n PUBLICADA (la vigente) de la ficha de un tipo de especie."""
+        """Atributos de la revisión PUBLICADA (la vigente) de la ficha de un tipo de especie."""
         filas = self._sesion.execute(
             text(
                 """
@@ -191,7 +197,7 @@ class RepositorioHallazgos:
     def registrar(
         self, datos: NuevoHallazgo, nombre_especie: str, publicos: dict
     ) -> UUID:
-        """Guarda el hallazgo completo en UNA transacciÃ³n: o queda todo o no queda nada."""
+        """Guarda el hallazgo completo en UNA transacción: o queda todo o no queda nada."""
         hallazgo_id = uuid4()
         try:
             self._sesion.execute(

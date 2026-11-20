@@ -1,4 +1,3 @@
-
 """Rutas de HU-03: consultar la ficha de un tipo de especie y registrar un hallazgo."""
 import logging
 from collections.abc import Callable
@@ -124,7 +123,7 @@ def registrar_hallazgo(
     datos = NuevoHallazgo(
         especie_id=entrada.especie_id,
         expedicion_id=entrada.expedicion_id,
-        investigador_id=decision.usuario_id,
+        investigador_id=decision.usuario_id,  # el autor de la versión 1 sale del token
         fecha_hallazgo=entrada.fecha_hallazgo,
         latitud=entrada.latitud,
         longitud=entrada.longitud,
