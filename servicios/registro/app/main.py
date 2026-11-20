@@ -8,7 +8,7 @@ Documentación automática de las rutas: http://localhost:8000/api/v1/registro/d
 """
 from fastapi import FastAPI
 
-from app.api import hallazgos
+from app.api import fichas, hallazgos
 from app.api.errores import registrar_manejadores
 from app.config import ROOT_PATH, SERVICIO
 from app.db import estado_bd
@@ -16,6 +16,7 @@ from app.db import estado_bd
 app = FastAPI(title="BioHub · Registro y Gestión de Campo", root_path=ROOT_PATH)
 registrar_manejadores(app)
 app.include_router(hallazgos.router)
+app.include_router(fichas.router)
 
 
 @app.get("/salud", tags=["salud"])
