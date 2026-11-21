@@ -17,6 +17,19 @@ Este servicio **no crea tablas**: solo lee la copia de `hallazgo_publico`
 que llega por replicación a la BD Consulta. Su usuario de base es de solo lectura.
 
 
+## Listado de hallazgos para el portal
+
+`GET /api/v1/consulta/hallazgos?limite=50&desplazamiento=0` (por Kong). Sirve para escoger un
+hallazgo y abrir su ficha (`GET /hallazgos/{id}`). Pasa por el PDP con `ver_ficha_publica`, así
+que lo puede usar el visitante sin sesión; si llega un token Bearer se le pasa al PDP.
+
+- Respuesta: `{ hallazgos: [{ hallazgo_id, especie, region, departamento, ecosistema,
+  fecha_hallazgo, atributos_publicos, version, actualizado_en }], limite, desplazamiento, cantidad }`,
+  del más reciente al más antiguo. Es la misma consulta y lista blanca de la API externa (HU-13):
+  nunca trae coordenadas.
+- `limite` de 1 a 100 (por defecto 50) y `desplazamiento` desde 0; fuera de rango responde 422.
+
+
 ## Caché de la ficha pública: patrón Decorator (HU-20, Entrega 2 · 6.2)
 
 `GET /hallazgos/{id}` primero le pregunta al PDP (`ver_ficha_publica`) y luego pide la ficha a una
