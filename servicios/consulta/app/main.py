@@ -7,7 +7,7 @@ Documentación automática de las rutas: http://localhost:8000/api/v1/consulta/d
 """
 from fastapi import FastAPI
 
-from app.api import ejemplo, externa, fichas
+from app.api import ejemplo, externa, fichas, listado
 from app.cache import estado_cache
 from app.config import ROOT_PATH, SERVICIO
 from app.db import estado_bd, filas_publicas
@@ -16,6 +16,7 @@ app = FastAPI(title="BioHub · Consulta Pública", root_path=ROOT_PATH)
 app.include_router(ejemplo.router)
 app.include_router(externa.router)
 app.include_router(fichas.router)
+app.include_router(listado.router)
 
 
 @app.get("/salud", tags=["salud"])
