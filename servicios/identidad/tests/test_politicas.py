@@ -21,6 +21,8 @@ def test_registrar_hallazgo_es_solo_para_investigador():
 def test_coordenadas_exactas_solo_para_alto_rango():
     assert PERMISOS["ver_ubicacion"] == {Rol.ALTO_RANGO}
 
+def test_consultar_catalogo_es_para_los_cinco_roles():
+    assert PERMISOS["consultar_catalogo"] == set(Rol)
 
 def test_un_usuario_sin_rol_no_puede_nada():
     for accion in PERMISOS:

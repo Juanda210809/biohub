@@ -32,6 +32,9 @@ PERMISOS: dict[str, frozenset[Rol]] = {
     "generar_reporte": frozenset({Rol.ALTO_RANGO}),
     "ver_reportes": frozenset({Rol.ALTO_RANGO}),
     "gestionar_usuarios": frozenset({Rol.ADMINISTRADOR}),
+    "consultar_catalogo": frozenset(
+        {Rol.INVESTIGADOR, Rol.CIENTIFICO_AUTORIZADO, Rol.ALTO_RANGO, Rol.AUDITOR, Rol.ADMINISTRADOR}
+    ),
 }
 
 # Del visitante sin sesión: se deciden sin tocar la base (pico de HU-20) y nunca dan coordenadas.

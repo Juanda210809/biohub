@@ -80,6 +80,7 @@ Respuesta (siempre 200):
 | `ver_historial` | AUDITOR |
 | `generar_reporte`, `ver_reportes` | ALTO_RANGO |
 | `gestionar_usuarios` | ADMINISTRADOR |
+| `consultar_catalogo` | Los 5 roles internos (desplegables de especies y expediciones del formulario de Registro) |
 | `ver_ficha_publica` | Todos, también sin sesión (nivel REGION, se decide sin tocar la base) |
 | cualquier otra | nadie |
 

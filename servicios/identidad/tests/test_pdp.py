@@ -75,6 +75,19 @@ def test_usa_el_rol_vigente_y_no_el_del_momento_del_login(cliente, repositorio, 
     assert preguntar(cliente, "registrar_hallazgo", token)["decision"] == "DENEGAR"
     assert preguntar(cliente, "ver_historial", token)["decision"] == "PERMITIR"
 
+@pytest.mark.parametrize("rol", list(Rol))
+def test_cualquier_rol_interno_puede_consultar_el_catalogo(cliente, token_de, rol):
+    assert preguntar(cliente, "consultar_catalogo", token_de(rol))["decision"] == "PERMITIR"
+
+
+@pytest.mark.parametrize("token", [None, "token-inventado"])
+def test_el_catalogo_se_niega_sin_sesion(cliente, token):
+    assert preguntar(cliente, "consultar_catalogo", token)["decision"] == "DENEGAR"
+
+
+def test_el_catalogo_se_niega_sin_rol(cliente, token_de):
+    assert preguntar(cliente, "consultar_catalogo", token_de(None))["decision"] == "DENEGAR"
+
 
 def test_una_accion_desconocida_se_niega(cliente, token_de):
     assert preguntar(cliente, "borrar_todo", token_de(Rol.ADMINISTRADOR))["decision"] == "DENEGAR"
