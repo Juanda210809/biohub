@@ -13,6 +13,17 @@
 | Pruebas | `tests/` |
 | Migraciones (tablas) | `migraciones/` — esquema `campo` |
 
+## Catálogo para el formulario de HU-03
+
+Cualquier rol interno (acción `consultar_catalogo` del PDP); sin token 401, sin permiso 403.
+
+| Ruta (por Kong) | Respuesta |
+|---|---|
+| `GET /api/v1/registro/especies` | `[{ id, nombreCientifico, nombreComun, tipoEspecieId, tipoEspecie }]`, por nombre científico |
+| `GET /api/v1/registro/expediciones` | `[{ id, nombre, fechaInicio, fechaFin }]`, de la más reciente a la más antigua |
+
+Con el `tipoEspecieId` de la especie elegida se pide `GET /api/v1/registro/tipos-especie/{id}/ficha` para armar los campos del formulario.
+
 ## Crear una tabla nueva
 
 ```bash
