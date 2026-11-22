@@ -1,0 +1,180 @@
+/* Estructura común: menú con enlaces, sesión en la barra lateral, inicio de sesión y pantallas
+   pendientes. Usa la misma paleta que la consulta pública (estilos.css). */
+
+a.nav-enlace {
+  text-decoration: none;
+}
+
+.nav-etiqueta-separada {
+  margin-top: 18px;
+}
+
+.lateral-inferior .lateral-version {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.boton-salir,
+.boton-entrar {
+  display: block;
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+}
+
+.boton-salir {
+  border: 1px solid #416650;
+  background: transparent;
+  color: #e9f1e9;
+}
+
+.boton-salir:hover {
+  background: #2b5841;
+}
+
+.boton-entrar {
+  background: #dcebdd;
+  color: #1c4b35;
+}
+
+.boton-entrar:hover {
+  background: #fff;
+}
+
+/* ------------------------------------------------------------------ Iniciar sesión */
+
+.entrar {
+  max-width: 420px;
+  margin: 24px auto 0;
+  padding: 30px;
+  border: 1px solid #e5eae3;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.entrar h2 {
+  margin: 8px 0 6px;
+  color: #20452f;
+  font: 800 24px Manrope, sans-serif;
+}
+
+.formulario-entrar {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.formulario-entrar label {
+  display: grid;
+  gap: 6px;
+  color: #4c6253;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.formulario-entrar input {
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #d9e3d8;
+  border-radius: 9px;
+  color: #2f4537;
+  font-size: 13px;
+}
+
+.formulario-entrar .boton {
+  height: 42px;
+  font-size: 13px;
+}
+
+.formulario-entrar .boton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.formulario-entrar .aviso-error {
+  margin: 0;
+}
+
+.aviso-sesion {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #edf3eb;
+  color: #4e6655;
+  font-size: 12px;
+}
+
+.ayuda-demo {
+  margin: 18px 0 0;
+  color: #839087;
+  font-size: 11px;
+  line-height: 1.9;
+}
+
+.ayuda-demo code {
+  display: inline-block;
+  margin: 0 6px 4px 0;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #f0f4ee;
+  color: #3e5546;
+}
+
+/* ------------------------------------------------------------------ Pantallas pendientes */
+
+.pendiente {
+  max-width: 760px;
+  padding: 28px;
+  border: 1px dashed #cbdacb;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.pendiente h2 {
+  margin: 8px 0 8px;
+  color: #20452f;
+  font: 800 22px Manrope, sans-serif;
+}
+
+.pendiente h3 {
+  margin: 20px 0 8px;
+  color: #34523e;
+  font-size: 13px;
+}
+
+.pendiente p,
+.pendiente li {
+  color: #5f7366;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.pendiente code {
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------------ Celular: el menú se ve */
+
+@media (max-width: 760px) {
+  .barra-lateral .nav-grupo {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    overflow-x: auto;
+  }
+
+  .barra-lateral .nav-etiqueta {
+    display: none;
+  }
+
+  .barra-lateral .nav-enlace {
+    width: auto;
+    flex-shrink: 0;
+    padding: 8px 10px;
+    white-space: nowrap;
+  }
+
+  .entrar {
+    padding: 22px;
+  }
+}

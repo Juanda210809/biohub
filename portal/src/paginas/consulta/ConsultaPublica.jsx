@@ -271,83 +271,56 @@ export default function ConsultaPublica() {
   }
 
   return (
-    <div className="app-shell">
-      <aside className="barra-lateral">
-        <a className="marca" href="#inicio" onClick={volverListado}>
-          <span className="marca-icono">B</span><span><strong>BioHub</strong><small>BIODIVERSIDAD COLOMBIA</small></span>
-        </a>
-        <div className="nav-grupo">
-          <span className="nav-etiqueta">ESPACIO DE TRABAJO</span>
-          <button className={`nav-enlace ${!seleccionado ? 'activo' : ''}`} onClick={volverListado}><Icono tipo="inicio" />Explorar registros</button>
-          <button className="nav-enlace" onClick={() => { setBusqueda(''); setRegionActiva('Todas'); setCategoriaActiva('Todas'); setDesplazamiento(0); volverListado() }}><Icono tipo="catalogo" />Todos los registros</button>
-        </div>
-        <div className="lateral-inferior">
-          <div className="lateral-hoja">❧</div>
-          <strong>Conocer para conservar</strong>
-          <p>Información pública para descubrir y proteger nuestra biodiversidad.</p>
-          <span className="lateral-version">PORTAL DE CONSULTA · MVP</span>
-        </div>
-      </aside>
+    <>
+    {!seleccionado ? (
+      <>
+        <section className="bienvenida">
+          <div className="bienvenida-texto">
+            <span className="etiqueta-superior">SISTEMA NACIONAL DE BIODIVERSIDAD</span>
+            <h1>La biodiversidad de Colombia, <em>al alcance de todos.</em></h1>
+            <p>Explora los registros públicos y descubre la riqueza natural de nuestros ecosistemas.</p>
+          </div>
+          <div className="bienvenida-ilustracion" aria-hidden="true"><span className="sol" /><span className="hoja hoja-uno">❧</span><span className="hoja hoja-dos">❧</span><span className="ave">⌁</span></div>
+          <div className="bienvenida-pie"><span>🌿</span> Datos públicos · Consulta de biodiversidad <span className="bienvenida-separador">•</span> Colombia</div>
+        </section>
 
-      <main className="contenido-principal">
-        <header className="barra-superior">
-          <div className="migas"><span>BioHub</span><b>/</b><strong>{seleccionado ? 'Ficha pública' : 'Consulta pública'}</strong></div>
-          <div className="perfil-publico"><span className="perfil-punto" /> {MODO_DEMO ? 'Modo demostración' : 'Consulta abierta'}</div>
-        </header>
+        <section className="seccion-listado">
+          <div className="seccion-titulo">
+            <div>
+              <span className="etiqueta-superior">INVENTARIO NACIONAL</span>
+              <h2>Registros de biodiversidad</h2>
+              <p>Explora especies de flora y fauna de los ecosistemas colombianos.</p>
+              {MODO_DEMO && <p className="aviso-demo" role="note">Datos ficticios de demostración; no corresponden a registros reales.</p>}
+            </div>
+            <div className="contador-registros"><strong>{cargando ? '—' : cantidad}</strong><span>registros en esta página</span></div>
+          </div>
 
-        <div className="contenido-pagina">
-          {!seleccionado ? (
-            <>
-              <section className="bienvenida">
-                <div className="bienvenida-texto">
-                  <span className="etiqueta-superior">SISTEMA NACIONAL DE BIODIVERSIDAD</span>
-                  <h1>La biodiversidad de Colombia, <em>al alcance de todos.</em></h1>
-                  <p>Explora los registros públicos y descubre la riqueza natural de nuestros ecosistemas.</p>
-                </div>
-                <div className="bienvenida-ilustracion" aria-hidden="true"><span className="sol" /><span className="hoja hoja-uno">❧</span><span className="hoja hoja-dos">❧</span><span className="ave">⌁</span></div>
-                <div className="bienvenida-pie"><span>🌿</span> Datos públicos · Consulta de biodiversidad <span className="bienvenida-separador">•</span> Colombia</div>
-              </section>
+          <div className="herramientas-listado">
+            <label className="buscador"><Icono tipo="buscar" /><input
+                  value={busqueda}
+                  onChange={(evento) => { setBusqueda(evento.target.value); setDesplazamiento(0) }}
+                  placeholder="Buscar especie, región o ecosistema…"
+                  aria-label="Buscar registros de biodiversidad"
+                /><kbd>⌕</kbd></label>
+            <label className="filtro-region"><span>Región</span><select value={regionActiva} onChange={(evento) => { setRegionActiva(evento.target.value); setDesplazamiento(0) }}><option value="Todas">Todas las regiones</option>{regiones.filter((region) => region !== 'Todas').map((region) => <option key={region} value={region}>{region}</option>)}</select></label>
+            <label className="filtro-region"><span>Tipo</span><select value={categoriaActiva} onChange={(evento) => { setCategoriaActiva(evento.target.value); setDesplazamiento(0) }}><option value="Todas">Flora y fauna</option><option value="Flora">Flora</option><option value="Fauna">Fauna</option></select></label>
+          </div>
 
-              <section className="seccion-listado">
-                <div className="seccion-titulo">
-                  <div>
-                    <span className="etiqueta-superior">INVENTARIO NACIONAL</span>
-                    <h2>Registros de biodiversidad</h2>
-                    <p>Explora especies de flora y fauna de los ecosistemas colombianos.</p>
-                    {MODO_DEMO && <p className="aviso-demo" role="note">Datos ficticios de demostración; no corresponden a registros reales.</p>}
-                  </div>
-                  <div className="contador-registros"><strong>{cargando ? '—' : cantidad}</strong><span>registros en esta página</span></div>
-                </div>
-
-                <div className="herramientas-listado">
-                  <label className="buscador"><Icono tipo="buscar" /><input
-                        value={busqueda}
-                        onChange={(evento) => { setBusqueda(evento.target.value); setDesplazamiento(0) }}
-                        placeholder="Buscar especie, región o ecosistema…"
-                        aria-label="Buscar registros de biodiversidad"
-                      /><kbd>⌕</kbd></label>
-                  <label className="filtro-region"><span>Región</span><select value={regionActiva} onChange={(evento) => { setRegionActiva(evento.target.value); setDesplazamiento(0) }}><option value="Todas">Todas las regiones</option>{regiones.filter((region) => region !== 'Todas').map((region) => <option key={region} value={region}>{region}</option>)}</select></label>
-                  <label className="filtro-region"><span>Tipo</span><select value={categoriaActiva} onChange={(evento) => { setCategoriaActiva(evento.target.value); setDesplazamiento(0) }}><option value="Todas">Flora y fauna</option><option value="Flora">Flora</option><option value="Fauna">Fauna</option></select></label>
-                </div>
-
-                {cargando && <div className="rejilla-hallazgos"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div>}
-                {!cargando && error && <MensajeError error={error} onRetry={() => setRecarga((valor) => valor + 1)} />}
-                {!cargando && !error && filtrados.length === 0 && (
-                  <div className="estado-vacio"><span className="estado-icono">🍃</span><h3>{hallazgos.length ? 'No encontramos coincidencias' : 'Aún no hay registros para mostrar'}</h3><p>{hallazgos.length ? 'Prueba con otra búsqueda o selecciona una región diferente.' : 'Cuando haya registros públicos disponibles, aparecerán aquí.'}</p>{(busqueda || regionActiva !== 'Todas') && <button type="button" className="boton boton-secundario" onClick={() => { setBusqueda(''); setRegionActiva('Todas'); setCategoriaActiva('Todas'); setDesplazamiento(0) }}>Limpiar filtros</button>}</div>
-                )}
-                {!cargando && !error && filtrados.length > 0 && <div className="rejilla-hallazgos">{filtrados.map((hallazgo) => <TarjetaHallazgo key={hallazgo.hallazgo_id} hallazgo={hallazgo} onOpen={abrirFicha} />)}</div>}
-
-                {!cargando && !error && hallazgos.length > 0 && (
-                  <div className="paginacion"><span>Mostrando {desplazamiento + 1}–{desplazamiento + hallazgos.length} registros de esta consulta</span><div><button className="boton-pagina" disabled={desplazamiento === 0} onClick={() => setDesplazamiento((valor) => Math.max(0, valor - POR_PAGINA))}>← Anterior</button><button type="button" className="boton-pagina" disabled={!hayMas} onClick={() => setDesplazamiento((valor) => valor + POR_PAGINA)}>Siguiente →</button></div></div>
-                )}
-              </section>
-            </>
-          ) : (
-            <DetalleHallazgo hallazgo={seleccionado} ficha={ficha} cargando={cargandoFicha} error={errorFicha} onBack={volverListado} onRetry={() => { setSeleccionado({ ...seleccionado }) }} />
+          {cargando && <div className="rejilla-hallazgos"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div>}
+          {!cargando && error && <MensajeError error={error} onRetry={() => setRecarga((valor) => valor + 1)} />}
+          {!cargando && !error && filtrados.length === 0 && (
+            <div className="estado-vacio"><span className="estado-icono">🍃</span><h3>{hallazgos.length ? 'No encontramos coincidencias' : 'Aún no hay registros para mostrar'}</h3><p>{hallazgos.length ? 'Prueba con otra búsqueda o selecciona una región diferente.' : 'Cuando haya registros públicos disponibles, aparecerán aquí.'}</p>{(busqueda || regionActiva !== 'Todas') && <button type="button" className="boton boton-secundario" onClick={() => { setBusqueda(''); setRegionActiva('Todas'); setCategoriaActiva('Todas'); setDesplazamiento(0) }}>Limpiar filtros</button>}</div>
           )}
-          <footer className="pie-pagina"><span>© BioHub · Sistema Nacional de Registro y Vigilancia de Biodiversidad</span><span>Información pública para la conservación <b>♥</b></span></footer>
-        </div>
-      </main>
-    </div>
+          {!cargando && !error && filtrados.length > 0 && <div className="rejilla-hallazgos">{filtrados.map((hallazgo) => <TarjetaHallazgo key={hallazgo.hallazgo_id} hallazgo={hallazgo} onOpen={abrirFicha} />)}</div>}
+
+          {!cargando && !error && hallazgos.length > 0 && (
+            <div className="paginacion"><span>Mostrando {desplazamiento + 1}–{desplazamiento + hallazgos.length} registros de esta consulta</span><div><button className="boton-pagina" disabled={desplazamiento === 0} onClick={() => setDesplazamiento((valor) => Math.max(0, valor - POR_PAGINA))}>← Anterior</button><button type="button" className="boton-pagina" disabled={!hayMas} onClick={() => setDesplazamiento((valor) => valor + POR_PAGINA)}>Siguiente →</button></div></div>
+          )}
+        </section>
+      </>
+    ) : (
+      <DetalleHallazgo hallazgo={seleccionado} ficha={ficha} cargando={cargandoFicha} error={errorFicha} onBack={volverListado} onRetry={() => { setSeleccionado({ ...seleccionado }) }} />
+    )}
+    </>
   )
 }
