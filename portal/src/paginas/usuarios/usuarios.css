@@ -1,0 +1,318 @@
+/* HU-02 · HU-18 · Pantalla de usuarios y roles. Usa la paleta del portal (estilos.css). */
+
+.usuarios {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.usuarios-encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.usuarios-encabezado h2 {
+  margin: 6px 0 4px;
+  color: #20452f;
+  font: 800 24px Manrope, sans-serif;
+}
+
+.usuarios-encabezado p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.usuarios .boton {
+  cursor: pointer;
+}
+
+.usuarios .boton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* ---------------------------------------------------------------- Resumen */
+
+.usuarios-resumen {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.usuarios-resumen div {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid #e4e9e2;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.usuarios-resumen strong {
+  color: #20452f;
+  font: 800 20px Manrope, sans-serif;
+}
+
+.usuarios-resumen span {
+  color: #748078;
+  font-size: 11px;
+}
+
+.usuarios-resumen .usuarios-resumen-alerta {
+  border-color: #efdcae;
+  background: #fffbf0;
+}
+
+/* ---------------------------------------------------------------- Avisos */
+
+.usuarios .aviso-error,
+.usuarios-aviso-exito {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.usuarios-aviso-exito {
+  padding: 12px;
+  border: 1px solid #cfe3d2;
+  border-radius: 9px;
+  background: #f1f8f1;
+  color: #2f5a41;
+  font-size: 12px;
+}
+
+.usuarios-aviso-exito span,
+.usuarios .aviso-error span {
+  flex: 1;
+}
+
+.usuarios-cerrar-aviso {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------- Formulario */
+
+.usuarios-panel {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid #dfe8de;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.usuarios-panel-titulo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.usuarios-panel-titulo h3 {
+  margin: 6px 0 0;
+  color: #20452f;
+  font: 800 18px Manrope, sans-serif;
+}
+
+.usuarios-rejilla-campos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.usuarios-campo {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  color: #4c6253;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.usuarios-campo input,
+.usuarios-campo select,
+.usuarios-herramientas input,
+.usuarios-herramientas select,
+.usuarios-tabla select {
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #d9e3d8;
+  border-radius: 9px;
+  background: #fff;
+  color: #2f4537;
+  font-size: 12px;
+}
+
+.usuarios-campo input[aria-invalid='true'] {
+  border-color: #d9a597;
+  background: #fffaf8;
+}
+
+.usuarios-error-campo {
+  color: #a0503f;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.usuarios-panel-acciones {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.usuarios-panel-acciones .boton {
+  min-width: 140px;
+  height: 38px;
+  font-size: 12px;
+}
+
+/* ---------------------------------------------------------------- Filtros y tabla */
+
+.usuarios-herramientas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px 200px;
+  gap: 10px;
+}
+
+.usuarios-tabla-contenedor {
+  position: relative; /* encierra a .usuarios-oculto para que no desborde la página en celular */
+  overflow-x: auto;
+  border: 1px solid #e4e9e2;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.usuarios-tabla {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.usuarios-tabla th {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e4e9e2;
+  background: #f7f9f6;
+  color: #64816c;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.usuarios-tabla td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #eef2ec;
+  color: #2f4537;
+  vertical-align: middle;
+}
+
+.usuarios-tabla tr:last-child td {
+  border-bottom: 0;
+}
+
+.usuarios-tabla select {
+  min-width: 190px;
+}
+
+.usuarios-correo {
+  color: #5f7366;
+  overflow-wrap: anywhere;
+}
+
+.usuarios-fila-inactiva td {
+  background: #fafbf9;
+  color: #8a968d;
+}
+
+.usuarios-insignia-yo {
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #e8f0e8;
+  color: #285b40;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.usuarios-nota-fila {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+}
+
+.usuarios-estado {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.usuarios-estado-activa {
+  background: #e3f1e5;
+  color: #256140;
+}
+
+.usuarios-estado-inactiva {
+  background: #f4e8e4;
+  color: #8a5147;
+}
+
+.usuarios-acciones {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.usuarios-acciones .boton + .boton {
+  margin-left: 6px;
+}
+
+.usuarios-boton-peligro {
+  border: 1px solid #ecd0c8;
+  background: #fff;
+  color: #9a4b3c;
+}
+
+.usuarios-boton-peligro:hover:not(:disabled) {
+  background: #fff4f1;
+}
+
+.usuarios-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.usuarios-nota {
+  margin: 0;
+  color: #839087;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+@media (max-width: 760px) {
+  .usuarios-resumen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .usuarios-rejilla-campos,
+  .usuarios-herramientas {
+    grid-template-columns: 1fr;
+  }
+
+  .usuarios-panel {
+    padding: 16px;
+  }
+}
