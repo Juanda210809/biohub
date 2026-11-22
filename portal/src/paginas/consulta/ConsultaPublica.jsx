@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { listarHallazgos, obtenerFicha } from './api.js'
+import { listarHallazgos, obtenerFicha } from '../../api.js'
 import { HALLAZGOS_DEMO } from './datos-demo.js'
 
-const MODO_DEMO = true
+// Datos ficticios solo si se pide: VITE_MODO_DEMO=true. Por defecto usa el backend real por Kong.
+const MODO_DEMO = import.meta.env.VITE_MODO_DEMO === 'true'
 
 const POR_PAGINA = 12
 
@@ -27,6 +28,12 @@ function atributosSeguros(atributos) {
     const nombre = clave.toLowerCase()
     return valor !== null && valor !== '' && !/(coord|latitud|longitud|longitude|latitude)/i.test(nombre)
   })
+}
+
+// "temperaturaAgua" o "temperatura_agua" -> "Temperatura agua"
+function etiquetaAtributo(clave) {
+  const texto = String(clave).replaceAll('_', ' ').replace(/([a-záéíóúñ])([A-ZÁÉÍÓÚÑ])/g, '$1 $2').toLocaleLowerCase('es-CO')
+  return texto.charAt(0).toLocaleUpperCase('es-CO') + texto.slice(1)
 }
 
 function Icono({ tipo }) {
@@ -75,27 +82,18 @@ function obtenerVisualEspecie(hallazgo) {
   if (nombre.includes('mariposa')) return { clase: 'visual-mariposa', icono: '🦋', etiqueta: 'Insecto', categoria }
   if (nombre.includes('rana')) return { clase: 'visual-rana', icono: '🐸', etiqueta: 'Anfibio', categoria }
   if (nombre.includes('tucán') || nombre.includes('tucan')) return { clase: 'visual-tucan', icono: '🦜', etiqueta: 'Ave', categoria }
-  return { clase: categoria === 'Flora' ? 'visual-flora' : 'visual-fauna', icono: categoria === 'Flora' ? '🌿' : '🦋', etiqueta: categoria, categoria }
+  // Sin coincidencia: ícono neutro de la categoría, sin inventar el tipo de animal.
+  return { clase: categoria === 'Flora' ? 'visual-flora' : 'visual-fauna', icono: categoria === 'Flora' ? '🌿' : '🐾', etiqueta: categoria, categoria }
 }
 
-
-function obtenerImagenEspecie(hallazgo) {
-  const nombre = String(hallazgo.especie || '').toLocaleLowerCase('es-CO')
-
-  if (nombre.includes('colibrí') || nombre.includes('colibri')) return '/imagenes/ColibriEsmeralda.jpg'
-  if (nombre.includes('oso')) return '/imagenes/OsoDeAnteojos.jpg'
-  if (nombre.includes('delfín') || nombre.includes('delfin')) return '/imagenes/DelfinRosado.jpg'
-  if (nombre.includes('palma')) return '/imagenes/PalmaDeCera.jpg'
-  if (nombre.includes('orquídea') || nombre.includes('orquidea') || nombre.includes('cattleya')) return '/imagenes/Orquidea.jpg'
-  if (nombre.includes('frailejón') || nombre.includes('frailejon')) return '/imagenes/Frailejon.jpg'
-
-  return null
+function textoCategoria(visual) {
+  return visual.etiqueta === visual.categoria ? visual.categoria : `${visual.categoria} · ${visual.etiqueta}`
 }
+
 
 function TarjetaHallazgo({ hallazgo, onOpen }) {
   const especie = hallazgo.especie || 'Especie sin identificar'
   const visual = obtenerVisualEspecie(hallazgo)
-  const imagen = obtenerImagenEspecie(hallazgo)
 
   return (
     <button
@@ -105,24 +103,13 @@ function TarjetaHallazgo({ hallazgo, onOpen }) {
       aria-label={`Abrir ficha pública de ${especie}`}
     >
       <div className={`tarjeta-ilustracion ${visual.clase}`}>
-        {imagen ? (
-          <img
-            src={imagen}
-            alt={`${especie}, ${visual.etiqueta}`}
-            className="tarjeta-imagen"
-            loading="lazy"
-          />
-        ) : (
-          <>
-            <span className="ilustracion-icono" aria-hidden="true">{visual.icono}</span>
-            <span className="ilustracion-brillo" aria-hidden="true" />
-          </>
-        )}
+        <span className="ilustracion-icono" aria-hidden="true">{visual.icono}</span>
+        <span className="ilustracion-brillo" aria-hidden="true" />
         <span className="ilustracion-etiqueta">{visual.etiqueta}</span>
       </div>
       <div className="tarjeta-contenido">
         <div className={`tarjeta-meta categoria-meta categoria-${visual.categoria.toLowerCase()}`}>
-          <span className="punto-verde" /> {visual.categoria.toUpperCase()} · {visual.etiqueta.toUpperCase()}
+          <span className="punto-verde" /> {textoCategoria(visual).toUpperCase()}
         </div>
         <h3>{especie}</h3>
         <p className="tarjeta-lugar"><span>⌖</span> {nombreLugar(hallazgo)}</p>
@@ -139,8 +126,8 @@ function TarjetaHallazgo({ hallazgo, onOpen }) {
 function DetalleHallazgo({ hallazgo, ficha, cargando, error, onBack, onRetry }) {
   const datos = ficha || hallazgo
   const atributos = atributosSeguros(datos.atributos_publicos)
-  const categoria = obtenerCategoria(datos)
-  const imagen = obtenerImagenEspecie(datos)
+  const visual = obtenerVisualEspecie(datos)
+  const categoria = visual.categoria
 
   return (
     <section className="panel-detalle">
@@ -149,21 +136,10 @@ function DetalleHallazgo({ hallazgo, ficha, cargando, error, onBack, onRetry }) 
       {error && <div className="aviso-error"><strong>No fue posible cargar el detalle.</strong><span>{error.message}</span><button type="button" className="boton boton-secundario" onClick={onRetry}>Reintentar</button></div>}
       <div className="detalle-hero">
         <div className={`detalle-emblema categoria-emblema-${categoria.toLowerCase()}`}>
-          {imagen ? (
-            <img
-              src={imagen}
-              alt={`Fotografía de ${datos.especie || 'la especie'}`}
-              className="detalle-imagen"
-              loading="lazy"
-            />
-          ) : (
-            <span aria-hidden="true">
-              {categoria === 'Flora' ? '🌿' : '🦋'}
-            </span>
-          )}
+          <span aria-hidden="true">{visual.icono}</span>
         </div>
         <div>
-          <span className="etiqueta-superior">FICHA PÚBLICA · {categoria.toUpperCase()}</span>
+          <span className="etiqueta-superior">FICHA PÚBLICA · {textoCategoria(visual).toUpperCase()}</span>
           <h2>{datos.especie || 'Especie sin identificar'}</h2>
           <p>{datos.ecosistema || 'Ecosistema no especificado'}</p>
         </div>
@@ -179,7 +155,7 @@ function DetalleHallazgo({ hallazgo, ficha, cargando, error, onBack, onRetry }) 
         {atributos.length > 0 ? (
           <dl className="atributos-lista">
             {atributos.map(([clave, valor]) => (
-              <div className="atributo-fila" key={clave}><dt>{clave.replaceAll('_', ' ')}</dt><dd>{typeof valor === 'object' ? JSON.stringify(valor) : String(valor)}</dd></div>
+              <div className="atributo-fila" key={clave}><dt>{etiquetaAtributo(clave)}</dt><dd>{typeof valor === 'object' ? JSON.stringify(valor) : String(valor)}</dd></div>
             ))}
           </dl>
         ) : <p className="texto-suave">Este registro no tiene atributos públicos adicionales.</p>}
@@ -190,9 +166,10 @@ function DetalleHallazgo({ hallazgo, ficha, cargando, error, onBack, onRetry }) 
   )
 }
 
-export default function App() {
+export default function ConsultaPublica() {
   const [hallazgos, setHallazgos] = useState([])
   const [cantidad, setCantidad] = useState(0)
+  const [hayMas, setHayMas] = useState(false)
   const [desplazamiento, setDesplazamiento] = useState(0)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
@@ -211,7 +188,8 @@ export default function App() {
       setError(null)
       const pagina = HALLAZGOS_DEMO.slice(desplazamiento, desplazamiento + POR_PAGINA)
       setHallazgos(pagina)
-      setCantidad(HALLAZGOS_DEMO.length)
+      setCantidad(pagina.length)
+      setHayMas(desplazamiento + POR_PAGINA < HALLAZGOS_DEMO.length)
       setCargando(false)
       return undefined
     }
@@ -221,8 +199,12 @@ export default function App() {
     setError(null)
     listarHallazgos({ limite: POR_PAGINA, desplazamiento, signal: controlador.signal })
       .then((respuesta) => {
-        setHallazgos(Array.isArray(respuesta?.hallazgos) ? respuesta.hallazgos : [])
-        setCantidad(Number(respuesta?.cantidad) || 0)
+        const lista = Array.isArray(respuesta?.hallazgos) ? respuesta.hallazgos : []
+        setHallazgos(lista)
+        // La API no da el total: "cantidad" es lo que trae esta página. Si la página vino
+        // llena, puede haber más.
+        setCantidad(lista.length)
+        setHayMas(lista.length === POR_PAGINA)
       })
       .catch((fallo) => {
         if (fallo.name !== 'AbortError') setError(fallo)
@@ -232,6 +214,11 @@ export default function App() {
       })
     return () => controlador.abort()
   }, [desplazamiento, recarga])
+
+  // Al cambiar de página, volver arriba para ver el listado desde el principio.
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [desplazamiento])
 
   useEffect(() => {
     if (!seleccionado?.hallazgo_id) return undefined
@@ -271,6 +258,7 @@ export default function App() {
   }, [hallazgos, busqueda, regionActiva, categoriaActiva])
 
   function abrirFicha(hallazgo) {
+    window.scrollTo({ top: 0 })
     setSeleccionado(hallazgo)
     setFicha(null)
     setErrorFicha(null)
@@ -314,7 +302,7 @@ export default function App() {
                 <div className="bienvenida-texto">
                   <span className="etiqueta-superior">SISTEMA NACIONAL DE BIODIVERSIDAD</span>
                   <h1>La biodiversidad de Colombia, <em>al alcance de todos.</em></h1>
-                  <p>Explora los registros públicos de registros y descubre la riqueza natural de nuestros ecosistemas.</p>
+                  <p>Explora los registros públicos y descubre la riqueza natural de nuestros ecosistemas.</p>
                 </div>
                 <div className="bienvenida-ilustracion" aria-hidden="true"><span className="sol" /><span className="hoja hoja-uno">❧</span><span className="hoja hoja-dos">❧</span><span className="ave">⌁</span></div>
                 <div className="bienvenida-pie"><span>🌿</span> Datos públicos · Consulta de biodiversidad <span className="bienvenida-separador">•</span> Colombia</div>
@@ -328,7 +316,7 @@ export default function App() {
                     <p>Explora especies de flora y fauna de los ecosistemas colombianos.</p>
                     {MODO_DEMO && <p className="aviso-demo" role="note">Datos ficticios de demostración; no corresponden a registros reales.</p>}
                   </div>
-                  <div className="contador-registros"><strong>{cargando ? '—' : cantidad}</strong><span>registros disponibles</span></div>
+                  <div className="contador-registros"><strong>{cargando ? '—' : cantidad}</strong><span>registros en esta página</span></div>
                 </div>
 
                 <div className="herramientas-listado">
@@ -350,7 +338,7 @@ export default function App() {
                 {!cargando && !error && filtrados.length > 0 && <div className="rejilla-hallazgos">{filtrados.map((hallazgo) => <TarjetaHallazgo key={hallazgo.hallazgo_id} hallazgo={hallazgo} onOpen={abrirFicha} />)}</div>}
 
                 {!cargando && !error && hallazgos.length > 0 && (
-                  <div className="paginacion"><span>Mostrando {desplazamiento + 1}–{desplazamiento + hallazgos.length} registros de esta consulta</span><div><button className="boton-pagina" disabled={desplazamiento === 0} onClick={() => setDesplazamiento((valor) => Math.max(0, valor - POR_PAGINA))}>← Anterior</button><button type="button" className="boton-pagina" disabled={desplazamiento + hallazgos.length >= cantidad} onClick={() => setDesplazamiento((valor) => valor + POR_PAGINA)}>Siguiente →</button></div></div>
+                  <div className="paginacion"><span>Mostrando {desplazamiento + 1}–{desplazamiento + hallazgos.length} registros de esta consulta</span><div><button className="boton-pagina" disabled={desplazamiento === 0} onClick={() => setDesplazamiento((valor) => Math.max(0, valor - POR_PAGINA))}>← Anterior</button><button type="button" className="boton-pagina" disabled={!hayMas} onClick={() => setDesplazamiento((valor) => valor + POR_PAGINA)}>Siguiente →</button></div></div>
                 )}
               </section>
             </>
