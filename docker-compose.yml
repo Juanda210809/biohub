@@ -126,6 +126,21 @@ services:
     volumes: ["./servicios/reportes:/app"]
     depends_on:
       bd-reportes: { condition: service_healthy }
+      # Arranca con los datos de demostración ya copiados: el reporte automático del mes
+      # anterior se calcula con datos (HU-15).
+      datos-demo: { condition: service_completed_successfully }
+
+  # Carga una vez los hallazgos de demostración (julio a noviembre, con reclasificaciones)
+  # cuando Registro y Gobernanza ya crearon sus tablas. Ver db/demo/README.md.
+  datos-demo:
+    image: postgres:16
+    env_file: .env
+    volumes: ["./db/demo:/demo:ro"]
+    command: ["bash", "/demo/cargar-datos-demo.sh"]
+    restart: "no"
+    depends_on:
+      bd-operacional: { condition: service_healthy }
+      bd-reportes: { condition: service_healthy }
 
   # ------------------------------------------------------ puerta y portal
   kong:
