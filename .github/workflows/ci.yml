@@ -72,3 +72,37 @@ jobs:
       - run: ruff check db/tests
       - name: Configuracion, arranque, replicacion y acceso por Kong
         run: python -m pytest db/tests -q
+
+  punta-a-punta:
+    name: Pruebas de punta a punta del portal
+    timeout-minutes: 25
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Levantar el sistema completo con los datos de demostracion
+        run: |
+          cp .env.example .env
+          docker compose up --build -d --wait --wait-timeout 300
+      - name: Instalar Playwright
+        working-directory: pruebas/e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Recorrer el portal con cada rol
+        working-directory: pruebas/e2e
+        env:
+          CI: "true"
+        run: npx playwright test
+      - name: Guardar el reporte si algo falla
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-punta-a-punta
+          path: pruebas/e2e/salida/
+          retention-days: 7
+      - name: Registros de los servicios si algo falla
+        if: failure()
+        run: docker compose logs --no-color --tail 200
