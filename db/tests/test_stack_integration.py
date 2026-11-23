@@ -445,10 +445,10 @@ def test_demo_data_replication_reports_and_history_via_kong(stack):
     for database in DATABASES:
         for _ in range(30):
             count = sql(stack, database, statement).stdout.strip()
-            if count == "22":
+            if count == "57":
                 break
             time.sleep(1)
-        assert count == "22", f"Expected 22 demo findings in {database}, got {count}"
+        assert count == "57", f"Expected 57 demo findings in {database}, got {count}"
 
     address = stack("port", "kong", "8000").stdout.strip()
     with httpx.Client(base_url=f"http://{address}", timeout=10) as client:

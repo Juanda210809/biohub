@@ -15,17 +15,41 @@ ESPECIES = {
     "rana": ("20000000-0000-0000-0000-000000000001", "Phyllobates terribilis"),
     "reinita": ("20000000-0000-0000-0000-000000000002", "Setophaga cerulea"),
     "azulejo": ("20000000-0000-0000-0000-000000000003", "Thraupis episcopus"),
+    "rana-franjas": ("20000000-0000-0000-0000-000000000004", "Dendrobates truncatus"),
+    "gallito": ("20000000-0000-0000-0000-000000000005", "Rupicola peruvianus"),
+    "flamenco": ("20000000-0000-0000-0000-000000000006", "Phoenicopterus ruber"),
 }
+
+TIPO_ANFIBIO = "10000000-0000-0000-0000-000000000001"
+TIPO_AVE = "10000000-0000-0000-0000-000000000002"
+# Las 3 primeras vienen con la migración de Registro; estas se suman al catálogo para la demo.
+ESPECIES_NUEVAS = [
+    ("rana-franjas", TIPO_ANFIBIO, "rana venenosa de franjas amarillas", False),
+    ("gallito", TIPO_AVE, "gallito de roca andino", False),
+    ("flamenco", TIPO_AVE, "flamenco americano", False),
+]
 
 EXP_CAUCA_I = "30000000-0000-0000-0000-000000000002"
 EXP_CAUCA = "30000000-0000-0000-0000-000000000001"  # ya existe: 2026-10-05 a 2026-11-02
 EXP_BOYACA = "30000000-0000-0000-0000-000000000003"
 EXP_NARINO = "30000000-0000-0000-0000-000000000004"
+EXP_GUAJIRA = "30000000-0000-0000-0000-000000000005"
+EXP_CORDOBA = "30000000-0000-0000-0000-000000000006"
+EXP_RISARALDA = "30000000-0000-0000-0000-000000000007"
+EXP_SANTANDER = "30000000-0000-0000-0000-000000000008"
+EXP_CASANARE = "30000000-0000-0000-0000-000000000009"
+EXP_AMAZONAS = "30000000-0000-0000-0000-000000000010"
 
 LUGARES = {
     "Bosque húmedo": ("Pacífico", "Cauca", (2.571, -77.884)),
     "Páramo": ("Andina", "Boyacá", (5.695, -73.452)),
     "Manglar": ("Pacífico", "Nariño", (1.806, -78.764)),
+    "Laguna costera": ("Caribe", "La Guajira", (11.392, -73.140)),
+    "Bosque seco": ("Caribe", "Córdoba", (8.512, -75.705)),
+    "Bosque de niebla": ("Andina", "Risaralda", (4.733, -75.546)),
+    "Robledal": ("Andina", "Santander", (6.142, -73.394)),
+    "Sabana inundable": ("Orinoquía", "Casanare", (5.881, -71.891)),
+    "Selva amazónica": ("Amazonía", "Amazonas", (-4.112, -69.951)),
 }
 
 # (fecha, ecosistema, especie inicial, expedición, atributos, reclasificaciones)
@@ -61,6 +85,47 @@ HALLAZGOS = [
     ("2026-11-04", "Manglar", "azulejo", EXP_NARINO, {"altitudMsnm": 3, "numeroIndividuos": 7, "comportamiento": "alimentación"}, []),
     ("2026-11-11", "Manglar", "azulejo", EXP_NARINO, {"altitudMsnm": 2, "numeroIndividuos": 3, "comportamiento": "percha"}, []),
     ("2026-11-18", "Manglar", "azulejo", EXP_NARINO, {"altitudMsnm": 4, "numeroIndividuos": 5}, []),
+    # Laguna costera · La Guajira (Caribe): 1, 1, 1, 2, 2 -> octubre ALTA
+    ("2026-07-12", "Laguna costera", "flamenco", EXP_GUAJIRA, {"altitudMsnm": 1, "numeroIndividuos": 120, "comportamiento": "alimentación"}, []),
+    ("2026-08-21", "Laguna costera", "flamenco", EXP_GUAJIRA, {"altitudMsnm": 2, "numeroIndividuos": 85}, []),
+    ("2026-09-14", "Laguna costera", "flamenco", EXP_GUAJIRA, {"altitudMsnm": 1, "numeroIndividuos": 210, "comportamiento": "nidificación"}, []),
+    ("2026-10-04", "Laguna costera", "flamenco", EXP_GUAJIRA, {"altitudMsnm": 1, "numeroIndividuos": 160, "comportamiento": "alimentación"}, []),
+    ("2026-10-19", "Laguna costera", "flamenco", EXP_GUAJIRA, {"altitudMsnm": 2, "numeroIndividuos": 95, "comportamiento": "vuelo"}, []),
+    ("2026-11-15", "Laguna costera", "flamenco", EXP_GUAJIRA, {"altitudMsnm": 1, "numeroIndividuos": 140}, []),
+    ("2026-11-21", "Laguna costera", "flamenco", EXP_GUAJIRA, {"altitudMsnm": 1, "numeroIndividuos": 230, "comportamiento": "alimentación"}, []),
+    # Bosque seco · Córdoba (Caribe): 1, 1, 1, 1, 2 -> octubre NORMAL
+    ("2026-07-20", "Bosque seco", "rana-franjas", EXP_CORDOBA, {"temperaturaAgua": 26.4, "habitat": "hojarasca", "longitudCuerpoMm": 31}, []),
+    ("2026-08-11", "Bosque seco", "rana-franjas", EXP_CORDOBA, {"temperaturaAgua": 27.1, "habitat": "quebrada"}, []),
+    ("2026-09-09", "Bosque seco", "rana-franjas", EXP_CORDOBA, {"temperaturaAgua": 25.8, "habitat": "hojarasca", "longitudCuerpoMm": 28}, []),
+    ("2026-10-24", "Bosque seco", "rana-franjas", EXP_CORDOBA, {"temperaturaAgua": 26.0, "habitat": "charca"}, []),
+    ("2026-11-08", "Bosque seco", "rana-franjas", EXP_CORDOBA, {"temperaturaAgua": 26.9, "habitat": "hojarasca", "longitudCuerpoMm": 33}, []),
+    ("2026-11-17", "Bosque seco", "rana-franjas", EXP_CORDOBA, {"temperaturaAgua": 27.3, "habitat": "quebrada"}, []),
+    # Bosque de niebla · Risaralda (Andina): 2, 2, 1, 1, 2 -> octubre BAJA
+    ("2026-07-08", "Bosque de niebla", "gallito", EXP_RISARALDA, {"altitudMsnm": 2180, "numeroIndividuos": 4, "comportamiento": "percha"}, []),
+    ("2026-07-30", "Bosque de niebla", "gallito", EXP_RISARALDA, {"altitudMsnm": 2240, "numeroIndividuos": 6}, []),
+    ("2026-08-12", "Bosque de niebla", "gallito", EXP_RISARALDA, {"altitudMsnm": 2310, "numeroIndividuos": 3, "comportamiento": "alimentación"}, []),
+    ("2026-08-26", "Bosque de niebla", "gallito", EXP_RISARALDA, {"altitudMsnm": 2205, "numeroIndividuos": 5, "comportamiento": "percha"}, []),
+    ("2026-09-17", "Bosque de niebla", "gallito", EXP_RISARALDA, {"altitudMsnm": 2150, "numeroIndividuos": 2}, []),
+    ("2026-10-21", "Bosque de niebla", "gallito", EXP_RISARALDA, {"altitudMsnm": 2260, "numeroIndividuos": 3, "comportamiento": "vuelo"}, []),
+    ("2026-11-06", "Bosque de niebla", "gallito", EXP_RISARALDA, {"altitudMsnm": 2290, "numeroIndividuos": 7, "comportamiento": "percha"}, []),
+    ("2026-11-19", "Bosque de niebla", "gallito", EXP_RISARALDA, {"altitudMsnm": 2230, "numeroIndividuos": 4}, []),
+    # Robledal · Santander (Andina), donde la reinita pasa el invierno: 0, 0, 2, 1, 2 -> octubre ALTA
+    ("2026-09-12", "Robledal", "reinita", EXP_SANTANDER, {"altitudMsnm": 2050, "numeroIndividuos": 1, "comportamiento": "alimentación"}, []),
+    ("2026-09-28", "Robledal", "reinita", EXP_SANTANDER, {"altitudMsnm": 2120, "numeroIndividuos": 2, "comportamiento": "percha"}, []),
+    ("2026-10-10", "Robledal", "reinita", EXP_SANTANDER, {"altitudMsnm": 2190, "numeroIndividuos": 1}, []),
+    ("2026-11-03", "Robledal", "reinita", EXP_SANTANDER, {"altitudMsnm": 2080, "numeroIndividuos": 3, "comportamiento": "alimentación"}, []),
+    ("2026-11-16", "Robledal", "reinita", EXP_SANTANDER, {"altitudMsnm": 2150, "numeroIndividuos": 2, "comportamiento": "percha"}, []),
+    # Sabana inundable · Casanare (Orinoquía): 1, 1, 1, 1, 1 -> octubre NORMAL
+    ("2026-07-15", "Sabana inundable", "azulejo", EXP_CASANARE, {"altitudMsnm": 180, "numeroIndividuos": 3, "comportamiento": "percha"}, []),
+    ("2026-08-05", "Sabana inundable", "azulejo", EXP_CASANARE, {"altitudMsnm": 175, "numeroIndividuos": 2}, []),
+    ("2026-09-02", "Sabana inundable", "azulejo", EXP_CASANARE, {"altitudMsnm": 190, "numeroIndividuos": 4, "comportamiento": "alimentación"}, []),
+    ("2026-10-17", "Sabana inundable", "azulejo", EXP_CASANARE, {"altitudMsnm": 182, "numeroIndividuos": 2, "comportamiento": "vuelo"}, []),
+    ("2026-11-01", "Sabana inundable", "azulejo", EXP_CASANARE, {"altitudMsnm": 178, "numeroIndividuos": 5}, []),
+    # Selva amazónica · Amazonas (Amazonía): 1, 1, 1, 0, 1 -> octubre BAJA (sin hallazgos ese mes)
+    ("2026-07-26", "Selva amazónica", "azulejo", EXP_AMAZONAS, {"altitudMsnm": 95, "numeroIndividuos": 2, "comportamiento": "alimentación"}, []),
+    ("2026-08-17", "Selva amazónica", "azulejo", EXP_AMAZONAS, {"altitudMsnm": 88, "numeroIndividuos": 3}, []),
+    ("2026-09-23", "Selva amazónica", "azulejo", EXP_AMAZONAS, {"altitudMsnm": 102, "numeroIndividuos": 1, "comportamiento": "percha"}, []),
+    ("2026-11-02", "Selva amazónica", "azulejo", EXP_AMAZONAS, {"altitudMsnm": 91, "numeroIndividuos": 4, "comportamiento": "vuelo"}, []),
 ]
 
 # Atributos que la ficha marca como públicos (observaciones nunca lo es).
@@ -86,7 +151,20 @@ lineas = [
     "INSERT INTO campo.expedicion (id, nombre, fecha_inicio, fecha_fin) VALUES",
     f"    ({q(EXP_CAUCA_I)}, 'Monitoreo Pacífico Cauca 2026 (I)', '2026-07-01', '2026-09-30'),",
     f"    ({q(EXP_BOYACA)}, 'Expedición Páramos de Boyacá 2026', '2026-07-01', '2026-11-30'),",
-    f"    ({q(EXP_NARINO)}, 'Expedición Manglares de Nariño 2026', '2026-07-01', '2026-11-30')",
+    f"    ({q(EXP_NARINO)}, 'Expedición Manglares de Nariño 2026', '2026-07-01', '2026-11-30'),",
+    f"    ({q(EXP_GUAJIRA)}, 'Censo de flamencos La Guajira 2026', '2026-07-01', '2026-11-30'),",
+    f"    ({q(EXP_CORDOBA)}, 'Monitoreo Bosque Seco Córdoba 2026', '2026-07-01', '2026-11-30'),",
+    f"    ({q(EXP_RISARALDA)}, 'Expedición Bosques de Niebla Risaralda 2026', '2026-07-01', '2026-11-30'),",
+    f"    ({q(EXP_SANTANDER)}, 'Monitoreo Robledales de Santander 2026', '2026-09-01', '2026-11-30'),",
+    f"    ({q(EXP_CASANARE)}, 'Expedición Sabanas de Casanare 2026', '2026-07-01', '2026-11-30'),",
+    f"    ({q(EXP_AMAZONAS)}, 'Expedición Amazonas 2026', '2026-07-01', '2026-11-30')",
+    "ON CONFLICT (id) DO NOTHING;",
+    "",
+    "INSERT INTO campo.especie (id, tipo_especie_id, nombre_cientifico, nombre_comun, en_peligro) VALUES",
+    ",\n".join(
+        f"    ({q(ESPECIES[clave][0])}, {q(tipo)}, {q(ESPECIES[clave][1])}, {q(comun)}, {str(peligro).lower()})"
+        for clave, tipo, comun, peligro in ESPECIES_NUEVAS
+    ),
     "ON CONFLICT (id) DO NOTHING;",
     "",
 ]
