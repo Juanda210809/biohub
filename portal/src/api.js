@@ -84,3 +84,11 @@ export function listarHallazgos({ limite = 12, desplazamiento = 0, signal } = {}
 export function obtenerFicha(hallazgoId, { signal } = {}) {
   return pedir(`/api/v1/consulta/hallazgos/${encodeURIComponent(hallazgoId)}`, { signal })
 }
+// ---------------------------------------------------------------- Ubicación exacta (HU-07)
+
+export function obtenerUbicacion(hallazgoId, { signal } = {}) {
+  return pedir(
+    `/api/v1/registro/hallazgos/${encodeURIComponent(hallazgoId)}/ubicacion`,
+    { signal }
+  )
+}
