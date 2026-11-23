@@ -1,0 +1,56 @@
+/* Estilos de la pantalla de registrar hallazgo. Todas las clases empiezan con "reg-" para no
+   chocar con las del resto del portal. Los botones y avisos usan las clases comunes. */
+.reg { max-width: 920px; margin: 0 auto; }
+.reg h2 { margin: 6px 0 6px; color: #253d30; font: 800 24px Manrope, sans-serif; letter-spacing: -.5px; }
+.reg > .texto-suave { max-width: 640px; margin: 0 0 18px; line-height: 1.6; }
+
+.reg-formulario { display: grid; gap: 16px; }
+.reg-grupo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+  margin: 0;
+  padding: 18px 20px 20px;
+  border: 1px solid var(--borde, #e4e9e2);
+  border-radius: 12px;
+  background: #fff;
+}
+.reg-grupo legend { padding: 0 8px; color: #315d40; font: 700 13px Manrope, sans-serif; }
+.reg-ancho { grid-column: 1 / -1; margin: 0; }
+
+.reg-campo { display: grid; gap: 5px; align-content: start; min-width: 0; }
+.reg-etiqueta { color: #3e5546; font-size: 11px; font-weight: 700; }
+.reg-etiqueta b { color: #b45a4d; }
+.reg-campo input, .reg-campo select {
+  width: 100%;
+  height: 40px;
+  padding: 0 11px;
+  border: 1px solid #d7e0d6;
+  border-radius: 8px;
+  background: #fff;
+  color: #21362d;
+  font-size: 12px;
+}
+.reg-campo-error input, .reg-campo-error select { border-color: #d68b7f; background: #fffaf9; }
+.reg-ayuda { color: #89958c; font-size: 10px; }
+.reg-mensaje { color: #a5483b; font-size: 10px; font-weight: 600; }
+.reg-campo-apagado { opacity: .7; }
+
+.reg-acciones { display: flex; justify-content: flex-end; }
+.reg-acciones .boton { padding: 12px 22px; font-size: 12px; }
+.reg-acciones .boton:disabled { cursor: not-allowed; opacity: .6; }
+
+.reg-exito {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: 40px 24px; border: 1px solid #d6e5d6; border-radius: 14px; background: #fff;
+}
+.reg-exito .reg-icono {
+  display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%;
+  background: #dcebdd; color: #245c43; font-size: 28px; font-weight: 800;
+}
+.reg-exito p { margin: 0 0 18px; }
+.reg-exito code { overflow-wrap: anywhere; }
+
+@media (max-width: 720px) {
+  .reg-grupo { grid-template-columns: 1fr; }
+}
