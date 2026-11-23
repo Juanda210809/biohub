@@ -1,0 +1,107 @@
+/* Estilos de las pantallas de Gobernanza y Reportes (HU-08, HU-12, HU-15).
+   Todas las clases empiezan con "gob-" para no chocar con las de otras pantallas. */
+
+.gob-pagina{display:grid;gap:20px}
+.gob-encabezado h1{margin:6px 0 6px;color:#1d4531;font:800 clamp(24px,2.6vw,32px)/1.2 Manrope,sans-serif;letter-spacing:-1px}
+.gob-encabezado p{max-width:640px;margin:0;color:#65786b;font-size:12px;line-height:1.7}
+.gob-columnas{display:grid;grid-template-columns:minmax(260px,360px) minmax(0,1fr);gap:18px;align-items:start}
+.gob-panel{display:grid;gap:14px;padding:20px;border:1px solid var(--borde);border-radius:12px;background:#fff;min-width:0}
+.gob-panel .seccion-titulo h2{margin:6px 0 0;color:#253d30;font:800 17px Manrope,sans-serif;letter-spacing:-.3px}
+
+.gob-buscador{height:40px}
+.gob-lista{display:grid;gap:6px;max-height:520px;margin:0;padding:0;overflow:auto;list-style:none}
+.gob-opcion{display:grid;gap:3px;width:100%;padding:10px 12px;border:1px solid #edf0eb;border-radius:9px;background:#fff;color:inherit;text-align:left}
+.gob-opcion:hover{border-color:#c6d8c7;background:#f7faf6}
+.gob-opcion.activo{border-color:#285b40;background:var(--verde-claro);box-shadow:inset 3px 0 0 #285b40}
+.gob-opcion em{color:#294633;font:italic 700 13px Manrope,sans-serif}
+.gob-opcion span{color:#6c7c71;font-size:10px}
+.gob-opcion small{color:#929c94;font-size:9px}
+.gob-vacio-corto{margin:0}
+
+.gob-actual{display:grid;gap:6px;padding:18px;border-radius:11px;background:linear-gradient(110deg,#e4eee2,#edf2e9)}
+.gob-actual em,.gob-version em{font:italic 800 20px Manrope,sans-serif;color:#20452f}
+.gob-datos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:4px 0 0}
+.gob-datos div{min-width:0}
+.gob-datos dt{color:#87938a;font-size:9px}
+.gob-datos dd{margin:3px 0 0;color:#35533e;font:700 11px Manrope,sans-serif;overflow-wrap:anywhere}
+
+.gob-formulario{display:grid;gap:14px}
+.gob-campo{display:grid;gap:6px;color:#34483c;font-size:11px;font-weight:700}
+.gob-campo small{font-weight:500;color:#8a958d}
+.gob-campo select,.gob-campo textarea,.gob-campo input{width:100%;padding:10px 12px;border:1px solid #dce6dc;border-radius:8px;background:#fff;color:#34483c;font:inherit;font-weight:400;font-size:12px}
+.gob-campo textarea{min-height:110px;resize:vertical;line-height:1.6}
+/* Rojo solo cuando el usuario ya tocó el campo (:user-invalid) o el backend lo rechazó (.con-error). */
+.gob-campo :is(select,textarea,input):is(:user-invalid,[aria-invalid="true"]){border-color:#c0604f;background:#fffaf8}
+.gob-pista{color:#7b877f;font-size:10px;font-weight:500;line-height:1.5}
+.gob-nota-obligatorios{margin:0}
+.gob-error-campo{display:flex;gap:6px;align-items:baseline;color:#a2483a;font-size:10px;font-weight:600}
+.gob-contador{justify-self:end;color:#9aa49c;font-size:9px;font-weight:500}
+.gob-acciones{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.gob-acciones .boton{min-height:38px}
+.boton:disabled{cursor:not-allowed;opacity:.5}
+
+.gob-exito{display:grid;gap:6px;padding:16px 18px;border:1px solid #c9dccb;border-radius:11px;background:#eef6ee;color:#2f5a3e;font-size:11px;line-height:1.6}
+.gob-exito strong{font:800 14px Manrope,sans-serif;color:#1d4531}
+.gob-exito .gob-cambio{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.gob-tachado{color:#a2483a;text-decoration:line-through}
+
+/* Historial */
+.gob-filtro-fecha{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.gob-filtro-fecha .gob-campo{min-width:180px}
+.gob-comparacion{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:stretch}
+.gob-version{display:grid;gap:6px;align-content:start;padding:18px;border:1px solid var(--borde);border-radius:11px;background:#fff}
+.gob-version.hoy{border-color:#173d2d;background:#173d2d;color:#e9f1e9}
+.gob-version.hoy em{color:#fff}
+.gob-version.hoy .etiqueta-superior{color:#a9c3b0}
+.gob-version.hoy .gob-meta{color:#b8cdbd}
+.gob-meta{margin:0;color:#728276;font-size:10px;line-height:1.6}
+.gob-flecha{display:grid;place-items:center;color:#64816c;font-size:22px}
+/* La tabla se desplaza dentro de su caja; con teclado se puede enfocar la caja y moverla con flechas. */
+.gob-tabla-envoltura{overflow:auto;max-inline-size:100%;max-block-size:min(520px,75vh);container-type:inline-size;border-radius:8px}
+.gob-tabla thead th{position:sticky;inset-block-start:0;z-index:1;background:#fff}
+.gob-tabla tbody th{border-bottom:1px solid #f0f3ef}
+.gob-tabla{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
+.gob-tabla thead th{padding:9px 10px;border-bottom:1px solid var(--borde);color:#839087;font-size:9px;font-weight:700;letter-spacing:1px;text-align:left;text-transform:uppercase}
+.gob-tabla :is(td,tbody th){padding:10px;text-align:left;font-weight:400;border-bottom:1px solid #f0f3ef;color:#3b5141;vertical-align:middle;overflow-wrap:anywhere}
+.gob-tabla tbody th{color:#294633;font-weight:700}
+.gob-tabla tr:last-child :is(td,th){border-bottom:0}
+.gob-tabla td.antes{color:#a2483a;text-decoration:line-through}
+.gob-tabla td.ahora{color:#1d4531;font-weight:700}
+.gob-tabla td.numero{text-align:right;font-variant-numeric:tabular-nums}
+.gob-tabla th.numero{text-align:right}
+
+/* Índices */
+.gob-resumen{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.gob-insignia{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:999px;font-size:9px;font-weight:700;letter-spacing:.4px;white-space:nowrap}
+.gob-insignia::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.gob-insignia.alta{background:#fbe9e4;color:#a2483a}
+.gob-insignia.normal{background:#e4efe5;color:#2f6a45}
+.gob-insignia.baja{background:#e6eef5;color:#3d6587}
+.gob-insignia.sin_historia{background:#f0f1ee;color:#77827a}
+.gob-barra{position:relative;height:8px;min-width:90px;border-radius:99px;background:#eef2ec;overflow:hidden}
+.gob-barra span{position:absolute;inset:0 auto 0 0;border-radius:99px;background:#5b9b6b}
+.gob-barra span.alta{background:#c0604f}
+.gob-barra span.baja{background:#5f88ad}
+.gob-leyenda{display:flex;flex-wrap:wrap;gap:8px 16px;margin:0;padding:0;list-style:none;color:#7b877f;font-size:10px}
+.gob-leyenda li{display:flex;align-items:center;gap:6px}
+
+/* Con poco espacio (según el ancho de la tabla, no de la pantalla) cada ecosistema es una tarjeta. */
+@container (width < 620px){
+  .gob-apilable :is(table,tbody,tr,th,td){display:block}
+  .gob-apilable thead{display:none}
+  .gob-apilable caption{position:absolute}
+  .gob-apilable tr{margin-block-end:10px;border:1px solid var(--borde);border-radius:10px;overflow:hidden}
+  .gob-apilable tbody th{background:var(--verde-claro);border-bottom:1px solid var(--borde)}
+  .gob-apilable td{display:flex;justify-content:space-between;gap:12px;align-items:center;text-align:right}
+  .gob-apilable td.numero{text-align:right}
+  .gob-apilable td::before{content:attr(data-etiqueta);color:#839087;font-weight:600}
+  /* La barra es decorativa: su etiqueta no se lee (el índice ya tiene el número). */
+  .gob-apilable td.celda-barra::before{content:attr(data-etiqueta);content:attr(data-etiqueta) / ""}
+  .gob-apilable td.celda-barra .gob-barra{flex:1;max-inline-size:60%}
+}
+
+/* Oculta a la vista pero lo deja para lectores de pantalla. */
+.visually-hidden:where(:not(:focus-within,:active)){position:absolute!important;clip-path:inset(50%)!important;overflow:hidden!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;border:0!important;white-space:nowrap!important}
+
+@media(max-width:1000px){.gob-columnas{grid-template-columns:1fr}.gob-lista{max-height:300px}.gob-resumen{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.gob-tabla-envoltura{max-block-size:none}.gob-comparacion{grid-template-columns:1fr}.gob-flecha{transform:rotate(90deg)}.gob-datos{grid-template-columns:1fr 1fr}.gob-panel{padding:16px}}
