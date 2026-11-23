@@ -58,3 +58,7 @@ docker compose logs -t registro | Select-String "PDP no disponible|Error interno
 
 Solo cuentan como saturación `PDP no disponible o respuesta inválida...` y `Error interno del PDP...`.
 Un 403 por rol o por sesión vencida es un error de la prueba, no del sistema.
+
+## Pruebas de punta a punta del portal
+
+En `e2e/`: recorren el portal con cada rol en un navegador real (Playwright) contra el sistema completo, y las corre el CI en cada PR. Cómo correrlas y qué cubren: `e2e/README.md`.

@@ -1,0 +1,13 @@
+{
+  "name": "biohub-pruebas-e2e",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "reporte": "playwright show-report salida/reporte"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1"
+  }
+}
