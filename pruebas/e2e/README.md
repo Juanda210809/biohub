@@ -8,7 +8,7 @@ Recorren el portal en un navegador real (Playwright + Chromium), como lo haría 
 | `pruebas/flujo-mvp.spec.js` | El flujo completo, en orden: el investigador registra un hallazgo con coordenadas → el visitante lo ve sin coordenadas → el científico lo reclasifica → el auditor ve el historial → alto rango genera los índices del mes |
 | `pruebas/usuarios.spec.js` | El administrador crea una cuenta, le cambia el rol (cambia su menú), la desactiva (ya no entra) y no puede cambiarse su propio rol |
 | `pruebas/datos-demo.spec.js` | Con los datos de `db/demo/`: índices de octubre con niveles alto, normal y bajo, e historial con el antes y el después |
-| `pruebas/mapa.spec.js` | Pendiente (`test.fixme`): HU-07, mapa con coordenadas exactas para alto rango |
+| `pruebas/mapa.spec.js` | HU-07: alto rango ve el marcador en el punto exacto; investigador, científico, auditor y admin ven solo región y departamento, sin marcador ni coordenadas; sin rol no tiene acceso y sin sesión pide entrar |
 
 ## Cómo correrlas
 
