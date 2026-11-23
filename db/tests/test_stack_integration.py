@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import time
 import uuid
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import httpx
@@ -429,3 +430,59 @@ def test_consulta_outage_preserves_gateway_controls_and_recovers(stack):
         assert client.get(external, headers=credentials).status_code == 200
         assert client.get(external).status_code == 401
         assert client.get("/api/v1/consulta/externa/hallazgos").status_code == 403
+
+
+def test_demo_data_replication_reports_and_history_via_kong(stack):
+    container = stack("ps", "-a", "-q", "datos-demo").stdout.strip()
+    assert container, "Missing datos-demo container"
+    info = json.loads(
+        subprocess.check_output(["docker", "inspect", container], text=True, encoding="utf-8")
+    )[0]
+    assert info["State"]["Status"] == "exited"
+    assert info["State"]["ExitCode"] == 0
+
+    statement = "SELECT count(*) FROM campo.hallazgo_publico WHERE hallazgo_id::text LIKE '60000000-%'"
+    for database in DATABASES:
+        for _ in range(30):
+            count = sql(stack, database, statement).stdout.strip()
+            if count == "22":
+                break
+            time.sleep(1)
+        assert count == "22", f"Expected 22 demo findings in {database}, got {count}"
+
+    address = stack("port", "kong", "8000").stdout.strip()
+    with httpx.Client(base_url=f"http://{address}", timeout=10) as client:
+        tokens = {}
+        for role in ("altorango", "auditor"):
+            response = client.post(
+                "/api/v1/identidad/sesiones",
+                json={"correo": f"{role}@biohub.local", "contrasena": "BioHub2026!"},
+            )
+            assert response.status_code == 201, response.text
+            tokens[role] = response.json()["token"]
+
+        # Reportes genera solo el mes anterior al actual: en noviembre de 2026 es octubre.
+        # Otro mes, octubre no se genera solo; se pide a mano y se revisan los mismos niveles.
+        alto_rango = {"Authorization": f"Bearer {tokens['altorango']}"}
+        response = client.get("/api/v1/reportes/indices/2026-10", headers=alto_rango)
+        if response.status_code == 404:
+            response = client.post("/api/v1/reportes/indices/2026-10", headers=alto_rango)
+        assert response.status_code in (200, 201), response.text
+        report = response.json()
+        hoy = datetime.now(timezone(timedelta(hours=-5)))
+        if (hoy.year, hoy.month) == (2026, 11):
+            assert report["origen"] == "AUTOMATICO"
+        levels = {item["ecosistema"]: item["nivel"] for item in report["ecosistemas"]}
+        for ecosystem, level in (("Bosque húmedo", "ALTA"), ("Páramo", "NORMAL"), ("Manglar", "BAJA")):
+            assert levels[ecosystem] == level
+
+        response = client.get(
+            "/api/v1/gobernanza/hallazgos/60000000-0000-0000-0000-000000000015/historial",
+            params={"fecha": "2026-09-01"},
+            headers={"Authorization": f"Bearer {tokens['auditor']}"},
+        )
+        assert response.status_code == 200, response.text
+        history = response.json()
+        assert history["enFecha"]["numero"] == 1
+        assert history["enFecha"]["especie"] == "Setophaga cerulea"
+        assert history["actual"]["especie"] == "Thraupis episcopus"
