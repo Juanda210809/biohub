@@ -1,0 +1,56 @@
+/* Estilos de la pantalla de definir fichas. Todas las clases empiezan con "fic-" para no chocar
+   con las del resto del portal. Los botones y avisos usan las clases comunes. */
+.fic { max-width: 960px; margin: 0 auto; }
+.fic h2 { margin: 6px 0 6px; color: #253d30; font: 800 24px Manrope, sans-serif; letter-spacing: -.5px; }
+.fic > .texto-suave { max-width: 640px; margin: 0 0 18px; line-height: 1.6; }
+
+.fic-selector { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 18px; }
+.fic-selector .fic-campo { width: 320px; max-width: 100%; }
+.fic-revision {
+  padding: 9px 12px; border-radius: 8px; background: #e8f0e8; color: #315d40; font-size: 11px; font-weight: 700;
+}
+
+.fic-campo { display: grid; gap: 5px; align-content: start; min-width: 0; }
+.fic-etiqueta { color: #3e5546; font-size: 11px; font-weight: 700; }
+.fic-campo input:not([type="checkbox"]), .fic-campo select, .fic-campo textarea {
+  width: 100%; padding: 0 11px; border: 1px solid #d7e0d6; border-radius: 8px; background: #fff;
+  color: #21362d; font-size: 12px;
+}
+.fic-campo input:not([type="checkbox"]), .fic-campo select { height: 40px; }
+.fic-campo textarea { padding: 9px 11px; resize: vertical; font-family: inherit; }
+.fic-campo input:disabled, .fic-campo select:disabled { background: #f1f4ef; color: #78867c; }
+.fic-campo-error input, .fic-campo-error select, .fic-campo-error textarea { border-color: #d68b7f; background: #fffaf9; }
+.fic-ayuda { color: #89958c; font-size: 10px; }
+.fic-mensaje { margin: 0; color: #a5483b; font-size: 10px; font-weight: 600; }
+
+.fic-lista { display: grid; gap: 14px; margin: 0 0 16px; padding: 0; list-style: none; }
+.fic-atributo { padding: 16px 18px 18px; border: 1px solid var(--borde, #e4e9e2); border-radius: 12px; background: #fff; }
+.fic-atributo-error { border-color: #e3b3aa; }
+.fic-atributo-cabecera { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.fic-atributo-cabecera strong { flex: 1; min-width: 0; color: #294633; font: 700 14px Manrope, sans-serif; overflow-wrap: anywhere; }
+.fic-marca {
+  padding: 3px 9px; border-radius: 20px; background: #e8f0e8; color: #315d40; font-size: 9px; font-weight: 700;
+}
+.fic-marca-nueva { background: #fdf1d6; color: #8a6414; }
+
+.fic-rejilla { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+.fic-ancho { grid-column: 1 / -1; }
+.fic-marcas { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; min-height: 40px; align-self: end; }
+.fic-casilla { display: flex; align-items: center; gap: 7px; color: #3e5546; font-size: 12px; font-weight: 600; }
+.fic-casilla input { width: 16px; height: 16px; }
+
+.fic-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.fic-espacio { flex: 1; }
+.fic-acciones .boton { padding: 11px 18px; font-size: 12px; }
+.fic-acciones .boton:disabled { cursor: not-allowed; opacity: .5; }
+.fic-nota { margin: 10px 0 0; text-align: right; }
+
+.fic-exito {
+  margin-bottom: 15px; padding: 12px 14px; border: 1px solid #cfe3d0; border-radius: 9px;
+  background: #eef6ee; color: #245c43; font-size: 12px; font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .fic-rejilla { grid-template-columns: 1fr; }
+  .fic-selector { flex-direction: column; align-items: stretch; }
+}
