@@ -19,14 +19,14 @@ def test_demo_sql_matches_generator(tmp_path):
     ).read_text(encoding="utf-8")
 
 
-def test_demo_sql_has_22_distinct_findings():
+def test_demo_sql_has_57_distinct_findings():
     content = (DEMO / "datos-demo.sql").read_text(encoding="utf-8")
     identifiers = re.findall(
         r"INSERT\s+INTO\s+campo\.hallazgo\s*\([^)]*\)\s*VALUES\s*\('([^']+)'",
         content,
         re.IGNORECASE,
     )
-    assert len(identifiers) == len(set(identifiers)) == 22
+    assert len(identifiers) == len(set(identifiers)) == 57
     assert all(identifier.startswith("60000000-") for identifier in identifiers)
 
 
@@ -50,7 +50,7 @@ def test_demo_public_inserts_never_expose_coordinates():
     inserts = re.findall(
         r"INSERT\s+INTO\s+campo\.hallazgo_publico\b[^;]*;", content, re.IGNORECASE
     )
-    assert len(inserts) == 22
+    assert len(inserts) == 57
     for statement in inserts:
         assert not re.search(r"\b(?:latitud|longitud|precision)(?:\b|_)", statement, re.IGNORECASE)
 

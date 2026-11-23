@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { listarHallazgos, obtenerFicha } from '../../api.js'
 import { HALLAZGOS_DEMO } from './datos-demo.js'
+import { fotoDeEspecie } from './fotos.js'
+import './fotos.css'
 
 // Datos ficticios solo si se pide: VITE_MODO_DEMO=true. Por defecto usa el backend real por Kong.
 const MODO_DEMO = import.meta.env.VITE_MODO_DEMO === 'true'
@@ -72,6 +74,8 @@ function obtenerCategoria(hallazgo) {
 function obtenerVisualEspecie(hallazgo) {
   const nombre = String(hallazgo.especie || '').toLocaleLowerCase('es-CO')
   const categoria = obtenerCategoria(hallazgo)
+  const foto = fotoDeEspecie(hallazgo.especie)
+  if (foto) return { clase: 'visual-foto', icono: foto.tipo === 'Ave' ? '🐦' : '🐸', etiqueta: foto.tipo, categoria }
 
   if (nombre.includes('colibrí')) return { clase: 'visual-colibri', icono: '🐦', etiqueta: 'Ave', categoria }
   if (nombre.includes('oso')) return { clase: 'visual-oso', icono: '🐻', etiqueta: 'Mamífero', categoria }
@@ -94,6 +98,7 @@ function textoCategoria(visual) {
 function TarjetaHallazgo({ hallazgo, onOpen }) {
   const especie = hallazgo.especie || 'Especie sin identificar'
   const visual = obtenerVisualEspecie(hallazgo)
+  const foto = fotoDeEspecie(hallazgo.especie)
 
   return (
     <button
@@ -103,8 +108,14 @@ function TarjetaHallazgo({ hallazgo, onOpen }) {
       aria-label={`Abrir ficha pública de ${especie}`}
     >
       <div className={`tarjeta-ilustracion ${visual.clase}`}>
-        <span className="ilustracion-icono" aria-hidden="true">{visual.icono}</span>
-        <span className="ilustracion-brillo" aria-hidden="true" />
+        {foto ? (
+          <img src={foto.src} alt={`Fotografía de referencia de ${especie}`} className="tarjeta-imagen" loading="lazy" />
+        ) : (
+          <>
+            <span className="ilustracion-icono" aria-hidden="true">{visual.icono}</span>
+            <span className="ilustracion-brillo" aria-hidden="true" />
+          </>
+        )}
         <span className="ilustracion-etiqueta">{visual.etiqueta}</span>
       </div>
       <div className="tarjeta-contenido">
@@ -128,6 +139,7 @@ function DetalleHallazgo({ hallazgo, ficha, cargando, error, onBack, onRetry }) 
   const atributos = atributosSeguros(datos.atributos_publicos)
   const visual = obtenerVisualEspecie(datos)
   const categoria = visual.categoria
+  const foto = fotoDeEspecie(datos.especie)
 
   return (
     <section className="panel-detalle">
@@ -136,7 +148,9 @@ function DetalleHallazgo({ hallazgo, ficha, cargando, error, onBack, onRetry }) 
       {error && <div className="aviso-error"><strong>No fue posible cargar el detalle.</strong><span>{error.message}</span><button type="button" className="boton boton-secundario" onClick={onRetry}>Reintentar</button></div>}
       <div className="detalle-hero">
         <div className={`detalle-emblema categoria-emblema-${categoria.toLowerCase()}`}>
-          <span aria-hidden="true">{visual.icono}</span>
+          {foto
+            ? <img src={foto.src} alt={`Fotografía de referencia de ${datos.especie}`} className="detalle-imagen" />
+            : <span aria-hidden="true">{visual.icono}</span>}
         </div>
         <div>
           <span className="etiqueta-superior">FICHA PÚBLICA · {textoCategoria(visual).toUpperCase()}</span>
@@ -144,6 +158,13 @@ function DetalleHallazgo({ hallazgo, ficha, cargando, error, onBack, onRetry }) 
           <p>{datos.ecosistema || 'Ecosistema no especificado'}</p>
         </div>
       </div>
+      {foto && (
+        <p className="credito-foto">
+          Foto de referencia de la especie (no del hallazgo): {foto.autor} ·{' '}
+          <a href={foto.licenciaUrl} target="_blank" rel="noreferrer">{foto.licencia}</a> ·{' '}
+          <a href={foto.fuente} target="_blank" rel="noreferrer">Wikimedia Commons</a>
+        </p>
+      )}
       <div className="detalle-grid">
         <article className="dato-detalle"><span>Departamento</span><strong>{datos.departamento || 'No disponible'}</strong></article>
         <article className="dato-detalle"><span>Región</span><strong>{datos.region || 'No disponible'}</strong></article>

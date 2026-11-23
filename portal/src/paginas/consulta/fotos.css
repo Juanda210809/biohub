@@ -1,0 +1,33 @@
+/* Fotos de referencia de las especies (fotos.js) y su crédito en la ficha. */
+.tarjeta-ilustracion.visual-foto {
+  padding: 0;
+  background: #dcebd9;
+}
+
+.credito-foto {
+  margin: 8px 0 0;
+  color: #85928a;
+  font-size: 10px;
+}
+
+.credito-foto a {
+  color: #56745e;
+}
+
+/* Los círculos decorativos son para las tarjetas con ícono; sobre una foto estorban. */
+.tarjeta-ilustracion.visual-foto::before,
+.tarjeta-ilustracion.visual-foto::after {
+  display: none;
+}
+
+.detalle-emblema:has(.detalle-imagen) {
+  width: 120px;
+  height: 120px;
+  overflow: hidden;
+}
+
+.detalle-imagen {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

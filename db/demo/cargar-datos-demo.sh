@@ -10,7 +10,7 @@ set -euo pipefail
 
 export PGUSER="$POSTGRES_USER" PGPASSWORD="$POSTGRES_PASSWORD" PGDATABASE="$POSTGRES_DB"
 ESPERA_MAXIMA=300
-TOTAL_DEMO=22
+TOTAL_DEMO=57
 
 consultar() {
   psql -h "$1" -v ON_ERROR_STOP=1 -Atc "$2" 2>/dev/null || true
