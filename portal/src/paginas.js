@@ -12,7 +12,7 @@ import Reclasificar from './paginas/reclasificar/Reclasificar.jsx'
 import RegistrarHallazgo from './paginas/registro/RegistrarHallazgo.jsx'
 import GestionUsuarios from './paginas/usuarios/GestionUsuarios.jsx'
 import { rutaSegura } from './navegacion.js'
-import { ROLES, ROLES_INTERNOS } from './roles.js'
+import { ROLES } from './roles.js'
 
 export const RUTA_INICIO = '/consulta'
 export const RUTA_ENTRAR = '/entrar'
@@ -21,7 +21,7 @@ export const PAGINAS = [
   { ruta: '/consulta', titulo: 'Consulta pública', icono: '◫', roles: null, componente: ConsultaPublica },
   { ruta: '/registro', titulo: 'Registrar hallazgo', icono: '✚', roles: [ROLES.INVESTIGADOR], componente: RegistrarHallazgo },
   { ruta: '/fichas', titulo: 'Definir fichas', icono: '☰', roles: [ROLES.CIENTIFICO_AUTORIZADO], componente: DefinirFicha },
-  { ruta: '/mapa', titulo: 'Ver en el mapa', icono: '⌖', roles: ROLES_INTERNOS, componente: UbicacionHallazgo },
+  { ruta: '/mapa', titulo: 'Ver en el mapa', icono: '⌖', roles: null, componente: UbicacionHallazgo },
   { ruta: '/reclasificar', titulo: 'Reclasificar hallazgo', icono: '⇄', roles: [ROLES.CIENTIFICO_AUTORIZADO], componente: Reclasificar },
   { ruta: '/historial', titulo: 'Historial y versiones', icono: '↺', roles: [ROLES.AUDITOR], componente: Historial },
   { ruta: '/indices', titulo: 'Índices de presión', icono: '▤', roles: [ROLES.ALTO_RANGO], componente: IndicesPresion },
